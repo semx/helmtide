@@ -24,7 +24,31 @@ var ErrTestTimeout = errors.New("tests timeout exceeded")
 // t.Setenv cannot be used from a parallel test. Set HELMTIDE_TEST_CLUSTER to a
 // kubeconfig to opt into running against a real one.
 func init() {
-	if _, ok := os.LookupEnv(ClusterEnv); ok {
+	if cluster, ok := os.LookupEnv(ClusterEnv); ok {
+		// The variable names a kubeconfig, so point the suite at that file.
+		// Treating it as a mere flag would hand the tests back whatever
+		// KUBECONFIG happened to be set to -- the accident this file exists to
+		// prevent -- while looking like an opt-in to a chosen cluster.
+		if cluster == "" {
+			panic("tests: " + ClusterEnv + " is empty: unset it, or set it to a kubeconfig")
+		}
+
+		// Absolute, because tests change directories. Give it an absolute path:
+		// a relative one is resolved against the directory of whichever package
+		// is being tested, which is rarely what you meant.
+		kubeconfig, err := filepath.Abs(cluster)
+		if err != nil {
+			panic("tests: cannot resolve " + ClusterEnv + ": " + err.Error())
+		}
+
+		if _, err := os.Stat(kubeconfig); err != nil {
+			panic("tests: " + ClusterEnv + " is not a readable kubeconfig, use an absolute path: " + err.Error())
+		}
+
+		if err := os.Setenv("KUBECONFIG", kubeconfig); err != nil {
+			panic("tests: cannot set KUBECONFIG: " + err.Error())
+		}
+
 		return
 	}
 
@@ -46,7 +70,9 @@ func init() {
 	}
 }
 
-// ClusterEnv names the kubeconfig to run cluster-dependent tests against.
+// ClusterEnv names the kubeconfig, by absolute path, to run cluster-dependent
+// tests against. Setting it both selects the cluster and turns the isolation
+// off; nothing else does either.
 const ClusterEnv = "HELMTIDE_TEST_CLUSTER"
 
 // RequireCluster skips a test unless a cluster was explicitly provided, so a

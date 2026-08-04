@@ -1,0 +1,46 @@
+name: Integration tests
+
+# The `integration` build tag covers the tests that install, diff, roll back and
+# uninstall real releases, so they need a real API server. They are on manual
+# dispatch rather than on every pull request because nobody in this fork has
+# watched them go green in CI yet; promote them to `pull_request` once they have.
+#
+# Locally: HELMTIDE_TEST_CLUSTER=~/.kube/config go test -tags=integration ./...
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Create KinD cluster
+        uses: container-tools/kind-action@v2
+        with:
+          config: tests/kind-config.yaml
+          registry: false
+
+      # The suite refuses to touch a cluster unless it is handed one, so point
+      # it at the KinD kubeconfig explicitly instead of relying on whatever is
+      # in the environment.
+      - name: Point the suite at KinD
+        run: |
+          echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
+          echo "HELMTIDE_TEST_CLUSTER=$HOME/.kube/config" >> "$GITHUB_ENV"
+
+      - name: Check the cluster answers
+        run: kubectl cluster-info
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Install go modules
+        run: go mod download
+
+      - name: Run integration tests
+        run: go test -tags=integration -covermode=atomic -timeout=30m ./...
