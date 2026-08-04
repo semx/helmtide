@@ -7,9 +7,9 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 
 	log "github.com/sirupsen/logrus"
-	"helm.sh/helm/v3/pkg/action"
-	helm "helm.sh/helm/v3/pkg/cli"
-	"helm.sh/helm/v3/pkg/registry"
+	"helm.sh/helm/v4/pkg/action"
+	helm "helm.sh/helm/v4/pkg/cli"
+	"helm.sh/helm/v4/pkg/registry"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/rest"
 )
@@ -17,9 +17,6 @@ import (
 var (
 	// Helm is an instance of helm CLI.
 	Helm = helm.New()
-
-	// Default logLevel for helm logs.
-	helmLogLevel = log.Debugf
 
 	// HelmRegistryClient  is an instance of helm registry client.
 	HelmRegistryClient *registry.Client
@@ -46,17 +43,14 @@ func wrapConfigFn(client *rest.Config) *rest.Config {
 
 // NewCfg creates helm internal configuration for provided namespace and kubecontext.
 func NewCfg(ns, kubecontext string) (*action.Configuration, error) {
-	cfg := new(action.Configuration)
+	cfg := action.NewConfiguration(action.ConfigurationSetLogger(NewSlogHandler()))
 	helmDriver := os.Getenv("HELM_DRIVER") // TODO: get rid of getenv in runtime
 	config := genericclioptions.NewConfigFlags(true)
 	config.WrapConfigFn = wrapConfigFn
 	config.Namespace = &ns
 	config.Context = &kubecontext
 
-	if Helm.Debug {
-		helmLogLevel = log.Infof
-	}
-	err := cfg.Init(config, ns, helmDriver, helmLogLevel)
+	err := cfg.Init(config, ns, helmDriver)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create helm configuration for %s namespace: %w", ns, err)
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/semx/helmtide/pkg/release"
 	"github.com/semx/helmtide/tests"
 	"github.com/stretchr/testify/suite"
-	helmRelease "helm.sh/helm/v3/pkg/release"
+	helmRelease "helm.sh/helm/v4/pkg/release/v1"
 )
 
 type ApplyTestSuite struct {

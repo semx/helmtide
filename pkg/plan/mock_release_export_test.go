@@ -12,9 +12,10 @@ import (
 	"github.com/semx/helmtide/pkg/template"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chartutil"
-	helmRelease "helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v4/pkg/action"
+	"helm.sh/helm/v4/pkg/chart/common"
+	helmReleaseIface "helm.sh/helm/v4/pkg/release"
+	helmRelease "helm.sh/helm/v4/pkg/release/v1"
 )
 
 //nolint:govet // field alignment doesn't matter in tests
@@ -42,10 +43,10 @@ func (r *MockReleaseConfig) SetChartName(_ string) {
 	r.Called()
 }
 
-func (r *MockReleaseConfig) OfflineKubeVersion() *chartutil.KubeVersion {
+func (r *MockReleaseConfig) OfflineKubeVersion() *common.KubeVersion {
 	r.Called()
 
-	v := &chartutil.KubeVersion{
+	v := &common.KubeVersion{
 		Major:   "1",
 		Minor:   "22",
 		Version: "1.22.0",
@@ -124,10 +125,10 @@ func (r *MockReleaseConfig) BuildValues(ctx context.Context, dir, templater stri
 	return nil
 }
 
-func (r *MockReleaseConfig) Uninstall(context.Context) (*helmRelease.UninstallReleaseResponse, error) {
+func (r *MockReleaseConfig) Uninstall(context.Context) (*helmReleaseIface.UninstallReleaseResponse, error) {
 	args := r.Called()
 
-	return args.Get(0).(*helmRelease.UninstallReleaseResponse), args.Error(1)
+	return args.Get(0).(*helmReleaseIface.UninstallReleaseResponse), args.Error(1)
 }
 
 func (r *MockReleaseConfig) Get(version int) (*helmRelease.Release, error) {

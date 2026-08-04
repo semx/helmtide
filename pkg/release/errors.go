@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/semx/helmtide/pkg/release/uniqname"
-	"helm.sh/helm/v3/pkg/storage/driver"
+	"helm.sh/helm/v4/pkg/storage/driver"
 )
 
 var (
@@ -86,6 +86,68 @@ func (err ChartCacheError) Error() string {
 
 func (err ChartCacheError) Unwrap() error {
 	return err.Err
+}
+
+type PostRendererNotFoundError struct {
+	Err    error
+	Binary string
+}
+
+func NewPostRendererNotFoundError(binary string, err error) error {
+	return &PostRendererNotFoundError{Binary: binary, Err: err}
+}
+
+func (err PostRendererNotFoundError) Error() string {
+	return fmt.Sprintf("failed to find post_renderer %q: %s", err.Binary, err.Err)
+}
+
+func (err PostRendererNotFoundError) Unwrap() error {
+	return err.Err
+}
+
+type PostRendererError struct {
+	Err    error
+	Binary string
+	Output string
+}
+
+func NewPostRendererError(binary, output string, err error) error {
+	return &PostRendererError{Binary: binary, Output: output, Err: err}
+}
+
+func (err PostRendererError) Error() string {
+	return fmt.Sprintf("post_renderer %q failed: %s\n%s", err.Binary, err.Err, err.Output)
+}
+
+func (err PostRendererError) Unwrap() error {
+	return err.Err
+}
+
+type InvalidWaitStrategyError struct {
+	Strategy string
+}
+
+func NewInvalidWaitStrategyError(strategy string) error {
+	return &InvalidWaitStrategyError{Strategy: strategy}
+}
+
+func (err InvalidWaitStrategyError) Error() string {
+	return fmt.Sprintf(
+		"invalid wait strategy %q, expected a boolean or one of: %s, %s, %s",
+		err.Strategy, WaitStrategyWatcher, WaitStrategyLegacy, WaitStrategyHookOnly,
+	)
+}
+
+type UnexpectedReleaseTypeError struct {
+	Release any
+}
+
+func NewUnexpectedReleaseTypeError(rel any) error {
+	return &UnexpectedReleaseTypeError{Release: rel}
+}
+
+func (err UnexpectedReleaseTypeError) Error() string {
+	return fmt.Sprintf("helm returned an unsupported release type: %T", err.Release)
 }
 
 type HelmTestsError struct {

@@ -46,7 +46,7 @@ func (ts *GetTestSuite) TestGetNotInstalled() {
 	rel := release.NewConfig()
 	rel.NamespaceF = strings.ToLower(strings.ReplaceAll(ts.T().Name(), "/", ""))
 	rel.CreateNamespace = true
-	rel.Wait = false
+	rel.WaitStrategy = release.WaitStrategyHookOnly
 	rel.ChartF.Name = "bitnami/nginx"
 
 	r, err := rel.Get(0)
@@ -61,7 +61,7 @@ func (ts *GetTestSuite) TestGet() {
 	rel := release.NewConfig()
 	rel.NamespaceF = strings.ToLower(strings.ReplaceAll(ts.T().Name(), "/", ""))
 	rel.CreateNamespace = true
-	rel.Wait = false
+	rel.WaitStrategy = release.WaitStrategyHookOnly
 	rel.ChartF.Name = "bitnami/nginx"
 
 	r1, err := rel.Sync(ts.ctx, false)

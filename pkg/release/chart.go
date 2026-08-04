@@ -14,14 +14,15 @@ import (
 	"github.com/semx/helmtide/pkg/helper"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/downloader"
-	"helm.sh/helm/v3/pkg/getter"
-	"helm.sh/helm/v3/pkg/helmpath"
-	"helm.sh/helm/v3/pkg/registry"
-	"helm.sh/helm/v3/pkg/repo"
+	"helm.sh/helm/v4/pkg/action"
+	chartiface "helm.sh/helm/v4/pkg/chart"
+	chart "helm.sh/helm/v4/pkg/chart/v2"
+	"helm.sh/helm/v4/pkg/chart/v2/loader"
+	"helm.sh/helm/v4/pkg/downloader"
+	"helm.sh/helm/v4/pkg/getter"
+	"helm.sh/helm/v4/pkg/helmpath"
+	"helm.sh/helm/v4/pkg/registry"
+	"helm.sh/helm/v4/pkg/repo/v1"
 )
 
 // Chart is a structure for chart download options.
@@ -37,7 +38,7 @@ type Chart struct {
 	Username              string `yaml:"username" json:"username" jsonschema:"description=Chart repository username"`
 	Password              string `yaml:"password" json:"password" jsonschema:"description=Chart repository password"`
 	Version               string `yaml:"version" json:"version" jsonschema:"description=Chart version"`
-	InsecureSkipTLSverify bool   `yaml:"insecure" json:"insecure" jsonschema:"description=Connect to server with an insecure way by skipping certificate verification"`
+	InsecureSkipTLSVerify bool   `yaml:"insecure" json:"insecure" jsonschema:"description=Connect to server with an insecure way by skipping certificate verification"`
 	Verify                bool   `yaml:"verify" json:"verify" jsonschema:"description=Verify the provenance of the chart before using it"`
 	PassCredentialsAll    bool   `yaml:"pass_credentials" json:"pass_credentials" jsonschema:"description=Pass credentials to all domains"`
 	PlainHTTP             bool   `yaml:"plain_http" json:"plain_http" jsonschema:"description=Connect to server with plain http and not https,default=false"`
@@ -51,7 +52,7 @@ func (c *Chart) CopyOptions(cpo *action.ChartPathOptions) {
 	cpo.CaFile = c.CaFile
 	cpo.CertFile = c.CertFile
 	cpo.KeyFile = c.KeyFile
-	cpo.InsecureSkipTLSverify = c.InsecureSkipTLSverify
+	cpo.InsecureSkipTLSVerify = c.InsecureSkipTLSVerify
 	cpo.PlainHTTP = c.PlainHTTP
 	cpo.Keyring = c.Keyring
 	cpo.Password = c.Password
@@ -125,10 +126,11 @@ func (rel *config) getDownloader() downloader.ChartDownloader {
 				client.ChartPathOptions.KeyFile,
 				client.ChartPathOptions.CaFile,
 			),
-			getter.WithInsecureSkipVerifyTLS(client.ChartPathOptions.InsecureSkipTLSverify),
+			getter.WithInsecureSkipVerifyTLS(client.ChartPathOptions.InsecureSkipTLSVerify),
 		},
 		RepositoryConfig: settings.RepositoryConfig,
 		RepositoryCache:  settings.RepositoryCache,
+		ContentCache:     settings.ContentCache,
 		RegistryClient:   client.GetRegistryClient(),
 	}
 }
@@ -141,7 +143,9 @@ func (rel *config) findChartInHelmCache() (string, error) {
 
 	dl := rel.getDownloader()
 
-	u, err := dl.ResolveChartVersion(rel.Chart().Name, rel.Chart().Version)
+	// helm v4 also returns the content digest here, which we don't use: for the repository charts
+	// below we compare against the digest from the repository index instead.
+	_, u, err := dl.ResolveChartVersion(rel.Chart().Name, rel.Chart().Version)
 	if err != nil {
 		return "", NewChartCacheError(err)
 	}
@@ -255,7 +259,13 @@ func (rel *config) GetChart() (*chart.Chart, error) {
 
 func (rel *config) chartCheck(ch *chart.Chart) error {
 	if req := ch.Metadata.Dependencies; req != nil {
-		if err := action.CheckDependencies(ch, req); err != nil {
+		// helm v4 accepts the version-agnostic chart.Dependency interface here instead of the
+		// v2 struct, so widen the slice.
+		deps := helper.SlicesMap(req, func(d *chart.Dependency) chartiface.Dependency {
+			return d
+		})
+
+		if err := action.CheckDependencies(ch, deps); err != nil {
 			return fmt.Errorf("failed to check chart %s dependencies: %w", ch.Name(), err)
 		}
 	}
@@ -296,6 +306,7 @@ func (rel *config) ChartDepsUpd() error {
 		Getters:          getter.All(settings),
 		RepositoryConfig: settings.RepositoryConfig,
 		RepositoryCache:  settings.RepositoryCache,
+		ContentCache:     settings.ContentCache,
 		Debug:            settings.Debug,
 	}
 	if client.Verify {

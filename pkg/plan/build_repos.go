@@ -6,7 +6,7 @@ import (
 	"github.com/semx/helmtide/pkg/release"
 	"github.com/semx/helmtide/pkg/repo"
 	log "github.com/sirupsen/logrus"
-	"helm.sh/helm/v3/pkg/registry"
+	"helm.sh/helm/v4/pkg/registry"
 )
 
 func (p *Plan) buildRepositories() (out []repo.Config, err error) {

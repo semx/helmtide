@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	helmRelease "helm.sh/helm/v3/pkg/release"
+	helmRelease "helm.sh/helm/v4/pkg/release/v1"
 )
 
 // journal records what happened during a build, in order.
