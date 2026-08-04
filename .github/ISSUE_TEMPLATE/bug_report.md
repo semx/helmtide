@@ -18,9 +18,9 @@ A clear and concise description of what the bug is.
 Steps to reproduce the behavior:
 
 1. Setup `log-level` to `trace`. `export HELMWAVE_LOG_LEVEL=trace`
-2. Show your helmwave.yml.tpl (if it exists)
-3. Show your helmwave.yml
-4. Show your Planfile (default is .helmwave/planfile)
+2. Show your helmtide.yml.tpl (or helmwave.yml.tpl, both are read)
+3. Show your helmtide.yml (or helmwave.yml)
+4. Show your Planfile (default is .helmtide/planfile)
 5. See error / Expected behavior
 
 **Expected behavior**
