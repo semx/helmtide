@@ -248,7 +248,14 @@ func (rel *config) BuildValues(ctx context.Context, dir, templater string) error
 			err := v.SetViaRelease(ctx, rel, dir, templater, renderedValuesMap)
 			switch {
 			case !v.Strict && errors.Is(ErrValuesNotExist, err):
-				l.WithError(err).Warn("skipping values...")
+				// Skipping is intentional for non-strict values, but a typo in the path
+				// looks exactly the same, so say out loud what the release is losing.
+				l.WithError(err).Warnf(
+					"values file %q for release %q does not exist and will be skipped: "+
+						"the release will use the chart defaults instead of these values. "+
+						"Set `strict: true` on this values entry to fail the build instead.",
+					v.Src, rel.Uniq(),
+				)
 				mu.Lock()
 				toDeleteMap[v] = true
 				mu.Unlock()

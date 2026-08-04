@@ -2,11 +2,14 @@ package release_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/semx/helmtide/pkg/release"
 	"github.com/semx/helmtide/pkg/template"
 	"github.com/semx/helmtide/tests"
+	log "github.com/sirupsen/logrus"
+	logTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v3"
 )
@@ -108,6 +111,44 @@ func (ts *ValuesTestSuite) TestBuildNonExistingNonStrict() {
 
 	ts.Require().NoError(err)
 	ts.Require().Empty(r.Values())
+}
+
+// A missing values file is skipped silently enough that a typo in the path is
+// indistinguishable from an intentional skip: the release quietly falls back to
+// the chart defaults. The skip must name the file and the release it belongs to.
+func (ts *ValuesTestSuite) TestBuildNonExistingNonStrictWarns() {
+	hook := logTest.NewLocal(log.StandardLogger())
+	ts.T().Cleanup(hook.Reset)
+
+	const src = "nonexisting-values-warning.yaml"
+
+	r := release.NewConfig()
+	r.NameF = "skipped-values"
+	r.NamespaceF = "testns"
+	r.ValuesF = []release.ValuesReference{
+		{
+			Src:    src,
+			Strict: false,
+		},
+	}
+
+	err := r.BuildValues(ts.ctx, ts.T().TempDir(), template.TemplaterSprig)
+
+	ts.Require().NoError(err)
+	ts.Require().Empty(r.Values())
+
+	var warning string
+
+	for _, entry := range hook.AllEntries() {
+		if entry.Level == log.WarnLevel && strings.Contains(entry.Message, src) {
+			warning = entry.Message
+
+			break
+		}
+	}
+
+	ts.Require().NotEmptyf(warning, "skipping %q must be reported with the file path in the message", src)
+	ts.Require().Contains(warning, r.Uniq().String(), "the warning must name the release that lost the values")
 }
 
 func (ts *ValuesTestSuite) TestBuildNonExistingStrict() {
