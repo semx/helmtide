@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/kubedog"
+	"github.com/semx/helmtide/pkg/kubedog"
 	"github.com/stretchr/testify/suite"
 	"github.com/werf/kubedog/pkg/trackers/rollout/multitrack"
 	meta1 "k8s.io/apimachinery/pkg/apis/meta/v1"

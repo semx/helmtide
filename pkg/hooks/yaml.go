@@ -2,7 +2,7 @@ package hooks
 
 import (
 	"github.com/google/shlex"
-	"github.com/helmwave/helmwave/pkg/helper"
+	"github.com/semx/helmtide/pkg/helper"
 	"gopkg.in/yaml.v3"
 )
 

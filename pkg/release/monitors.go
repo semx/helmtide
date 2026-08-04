@@ -3,8 +3,8 @@ package release
 import (
 	"context"
 
-	"github.com/helmwave/helmwave/pkg/monitor"
 	"github.com/invopop/jsonschema"
+	"github.com/semx/helmtide/pkg/monitor"
 )
 
 // MonitorFailedAction is a type for enumerating actions for handling failed monitors.

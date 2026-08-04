@@ -12,7 +12,7 @@ import (
 	gomplateOldFuncs "github.com/hairyhenderson/gomplate/v3/funcs" //nolint:staticcheck
 	"github.com/hairyhenderson/gomplate/v4"
 	"github.com/hairyhenderson/gomplate/v4/tmpl"
-	"github.com/helmwave/helmwave/pkg/parallel"
+	"github.com/semx/helmtide/pkg/parallel"
 	log "github.com/sirupsen/logrus"
 )
 

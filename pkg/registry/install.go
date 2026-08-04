@@ -1,7 +1,7 @@
 package registry
 
 import (
-	"github.com/helmwave/helmwave/pkg/helper"
+	"github.com/semx/helmtide/pkg/helper"
 	"helm.sh/helm/v3/pkg/registry"
 )
 

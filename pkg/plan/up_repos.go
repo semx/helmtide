@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/gofrs/flock"
-	"github.com/helmwave/helmwave/pkg/helper"
-	"github.com/helmwave/helmwave/pkg/repo"
+	"github.com/semx/helmtide/pkg/helper"
+	"github.com/semx/helmtide/pkg/repo"
 	log "github.com/sirupsen/logrus"
 	helmRepo "helm.sh/helm/v3/pkg/repo"
 )

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/helmwave/helmwave/pkg/release/uniqname"
+	"github.com/semx/helmtide/pkg/release/uniqname"
 	"helm.sh/helm/v3/pkg/storage/driver"
 )
 

@@ -3,7 +3,7 @@ package hooks_test
 import (
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/hooks"
+	"github.com/semx/helmtide/pkg/hooks"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v3"
 )

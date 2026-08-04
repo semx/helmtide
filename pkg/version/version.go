@@ -7,7 +7,7 @@ import (
 // Version is a helmwave binary version.
 // It should be a var not const.
 // It will override by goreleaser during release.
-// -X github.com/helmwave/helmwave/pkg/version.Version={{ .Version }}.
+// -X github.com/semx/helmtide/pkg/version.Version={{ .Version }}.
 var Version = "dev"
 
 // validate compares helmwave versions.

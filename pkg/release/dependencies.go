@@ -1,7 +1,7 @@
 package release
 
 import (
-	"github.com/helmwave/helmwave/pkg/release/uniqname"
+	"github.com/semx/helmtide/pkg/release/uniqname"
 	"gopkg.in/yaml.v3"
 )
 

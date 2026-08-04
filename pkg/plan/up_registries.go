@@ -3,8 +3,8 @@ package plan
 import (
 	"context"
 
-	"github.com/helmwave/helmwave/pkg/parallel"
-	regi "github.com/helmwave/helmwave/pkg/registry"
+	"github.com/semx/helmtide/pkg/parallel"
+	regi "github.com/semx/helmtide/pkg/registry"
 )
 
 func (p *Plan) syncRegistries(ctx context.Context) (err error) {

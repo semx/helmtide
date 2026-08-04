@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/helmwave/helmwave/pkg/helper"
+	"github.com/semx/helmtide/pkg/helper"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"

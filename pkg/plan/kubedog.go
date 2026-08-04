@@ -3,8 +3,8 @@ package plan
 import (
 	"fmt"
 
-	"github.com/helmwave/helmwave/pkg/kubedog"
-	"github.com/helmwave/helmwave/pkg/release"
+	"github.com/semx/helmtide/pkg/kubedog"
+	"github.com/semx/helmtide/pkg/release"
 	log "github.com/sirupsen/logrus"
 	"github.com/werf/kubedog/pkg/trackers/rollout/multitrack"
 )

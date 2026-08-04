@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/helmwave/helmwave/pkg/release/dependency"
+	"github.com/semx/helmtide/pkg/release/dependency"
 	"github.com/stretchr/testify/suite"
 )
 

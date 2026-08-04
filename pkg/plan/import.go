@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/helmwave/helmwave/pkg/release/uniqname"
-	"github.com/helmwave/helmwave/pkg/version"
+	"github.com/semx/helmtide/pkg/release/uniqname"
+	"github.com/semx/helmtide/pkg/version"
 	log "github.com/sirupsen/logrus"
 )
 

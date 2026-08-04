@@ -3,7 +3,7 @@ package helper_test
 import (
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/helper"
+	"github.com/semx/helmtide/pkg/helper"
 	"github.com/stretchr/testify/suite"
 )
 

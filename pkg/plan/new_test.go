@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/plan"
-	"github.com/helmwave/helmwave/pkg/release/uniqname"
-	"github.com/helmwave/helmwave/tests"
+	"github.com/semx/helmtide/pkg/plan"
+	"github.com/semx/helmtide/pkg/release/uniqname"
+	"github.com/semx/helmtide/tests"
 	"github.com/stretchr/testify/suite"
 )
 

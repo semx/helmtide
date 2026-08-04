@@ -5,7 +5,7 @@ package release_test
 import (
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/release"
+	"github.com/semx/helmtide/pkg/release"
 	"github.com/stretchr/testify/suite"
 )
 

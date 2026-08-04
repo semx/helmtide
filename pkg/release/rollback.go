@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/helmwave/helmwave/pkg/helper"
+	"github.com/semx/helmtide/pkg/helper"
 )
 
 func (rel *config) Rollback(ctx context.Context, version int) (err error) {

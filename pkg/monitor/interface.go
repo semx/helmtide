@@ -3,9 +3,9 @@ package monitor
 import (
 	"context"
 
-	"github.com/helmwave/helmwave/pkg/helper"
-	"github.com/helmwave/helmwave/pkg/log"
 	"github.com/invopop/jsonschema"
+	"github.com/semx/helmtide/pkg/helper"
+	"github.com/semx/helmtide/pkg/log"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )

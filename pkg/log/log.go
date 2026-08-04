@@ -3,9 +3,9 @@ package log
 import (
 	"context"
 
-	"github.com/helmwave/helmwave/pkg/helper"
 	formatter "github.com/helmwave/logrus-emoji-formatter"
 	"github.com/mgutz/ansi"
+	"github.com/semx/helmtide/pkg/helper"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"

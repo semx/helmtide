@@ -3,7 +3,7 @@ package action
 import (
 	"context"
 
-	"github.com/helmwave/helmwave/pkg/plan"
+	"github.com/semx/helmtide/pkg/plan"
 	"github.com/urfave/cli/v2"
 )
 

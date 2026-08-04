@@ -7,8 +7,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/helmwave/helmwave/pkg/plan"
-	"github.com/helmwave/helmwave/pkg/release/uniqname"
+	"github.com/semx/helmtide/pkg/plan"
+	"github.com/semx/helmtide/pkg/release/uniqname"
 	"github.com/urfave/cli/v2"
 )
 

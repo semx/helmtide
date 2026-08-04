@@ -1,6 +1,6 @@
 package plan
 
-import "github.com/helmwave/helmwave/pkg/release/uniqname"
+import "github.com/semx/helmtide/pkg/release/uniqname"
 
 func (p *Plan) Manifests() map[uniqname.UniqName]string {
 	return p.manifests

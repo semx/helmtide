@@ -1,53 +1,69 @@
-<p align="center">
-  <a href="https://docs.helmwave.app?utm_source=github&utm_medium=project"><img alt="helmwave logo" src="https://raw.githubusercontent.com/helmwave/logo/main/signed_logo_top.svg" style="max-height:100%;" height="300px" /></a>
-</p>
+# helmtide
 
-<p align="center">
-  <a href="https://landscape.cncf.io/?selected=helmwave"><img src="https://img.shields.io/badge/CNCF_Landscape-helmwave-blue" alt="CNCF Landscape - helmwave"></a>
-  <a href="https://github.com/helmwave/helmwave/blob/main/LICENSE"><img alt="license – MIT" src="https://img.shields.io/github/license/zhilyaev/helmwave"></a>
-  <a href="https://bestpractices.coreinfrastructure.org/projects/5426"><img alt="best-practices" src="https://bestpractices.coreinfrastructure.org/projects/5426/badge"></a>
-  <a href="https://codecov.io/gh/helmwave/helmwave"><img alt="codecov" src="https://codecov.io/gh/helmwave/helmwave/branch/main/graph/badge.svg?token=0WXxYhIG4S" /></a>
-  <a href="https://www.codacy.com/gh/helmwave/helmwave/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=helmwave/helmwave&amp;utm_campaign=Badge_Grade"><img alt="codacy" src="https://app.codacy.com/project/badge/Grade/200ca37690b7463b976f1ece36b53a4e"/></a>
-  <a href="https://www.codefactor.io/repository/github/helmwave/helmwave"><img src="https://www.codefactor.io/repository/github/helmwave/helmwave/badge" alt="CodeFactor" /></a>
-  <a href="https://goreportcard.com/report/github.com/helmwave/helmwave"><img src="https://goreportcard.com/badge/github.com/helmwave/helmwave" alt="CodeFactor" /></a>
-  <img alt="GitHub tag (latest SemVer)" src="https://img.shields.io/github/v/tag/zhilyaev/helmwave?label=latest">
-</p>
+**A maintained fork of [helmwave](https://github.com/helmwave/helmwave).**
 
+helmwave is a helm3-native tool for deploying a whole set of Helm releases from
+one file: a planfile you can review before applying, a dependency graph instead
+of a wall of `helm upgrade` calls, and live resource tracking through
+[kubedog](https://github.com/werf/kubedog). The design is good. It stopped
+receiving releases in December 2025, with its own release pull request left
+open and community contributions unreviewed since.
 
-🌊 Helmwave is **[helm3](https://github.com/helm/helm/)-native** tool for deploying your Helm Charts.
+helmtide picks it up from there. This is a fork, not a rewrite, and not a
+replacement blessed by the original authors — the credit for the design and for
+almost all of the code belongs to [Dmitriy Zhilyaev](https://github.com/zhilyaev)
+and the helmwave contributors. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
-> We focus on speed of execution, tiny size, pretty debugging.
+## What is different
 
-With 🌊 Helmwave you will become a superhero:
+**Dependencies are current.** `govulncheck` reported 33 vulnerabilities the
+code actually reaches, including helm 3.18.4 (panic on malformed YAML, memory
+exhaustion through a crafted JSON schema), go-getter 1.7.8 (symlink attacks,
+reached from `downloadRemoteSrc`) and go-git 5.13.0 (credentials forwarded
+across a redirect to another host). That is down to 5, and each of those has no
+upstream fix yet or needs a newer Go toolchain.
 
-- Deploy multiple environments by one step
-- Separate values for different environments
-- Common values for apps
-- Keep a directory of chart value files
-- Maintain changes in version control
-- Template values
-- Step-by-step deployment (`depends_on`, `allow_failure`)
-- Live tracking of Kubernetes resources with [kubedog](https://github.com/werf/kubedog)
-- Fetch data from external data sources like Vault, AWS Secrets Manager and SOPS
-- ... and much more!
+**Tests are meant to run on a laptop.** Parts of the upstream suite reach for
+the network and fail without saying why. Work in progress; see the tests
+section below.
 
-[![asciicast](https://asciinema.org/a/591181.svg)](https://asciinema.org/a/591181)
+## Drop-in
 
-## 📖 [Documentation](https://docs.helmwave.app?utm_source=github&utm_medium=project)
+An existing helmwave setup runs unchanged:
 
-Documentation available at [docs.helmwave.app](https://docs.helmwave.app?utm_source=github&utm_medium=project)
+| you have | helmtide |
+| --- | --- |
+| `helmwave.yml` | used as-is when there is no `helmtide.yml` |
+| `helmwave.yml.tpl` | same |
+| `HELMWAVE_*` variables | still read; `HELMTIDE_*` wins when both are set |
 
+So `helmtide build` works in a repository written for helmwave, and you can
+migrate one file at a time.
 
-## Community, discussion, contribution, and support
+## Install
 
-- <a href="https://t.me/helmwave" ><img src="https://img.shields.io/badge/telegram-chat-179cde.svg?logo=telegram" /></a>
-- [discussions](https://github.com/orgs/helmwave/discussions)
-- [kanban](https://github.com/orgs/helmwave/projects/3)
-- [contribution guide](https://github.com/helmwave/helmwave/blob/main/CONTRIBUTING.md)
-- [security and vulnerabilities](https://github.com/helmwave/helmwave/blob/main/SECURITY.md)
-- <a href="https://landscape.cncf.io/?selected=helmwave"><img src="https://img.shields.io/badge/CNCF_Landscape-helmwave-blue" alt="CNCF Landscape - helmwave"></a>
+```console
+go install github.com/semx/helmtide/cmd/helmtide@latest
+```
 
+## Usage
 
-## Stargazers over time
+```console
+helmtide build      # render the plan
+helmtide up         # apply it
+```
 
-[![Stargazers over time](https://starchart.cc/helmwave/helmwave.svg?variant=adaptive)](https://starchart.cc/helmwave/helmwave)
+The [helmwave documentation](https://docs.helmwave.app) still describes the
+configuration format accurately; where helmtide diverges it is written down here.
+
+## Contributing
+
+Issues and pull requests are welcome, including the ones that have been waiting
+upstream. If you are the author of a pull request that was left open there and
+you would rather it went to helmwave when maintenance resumes, say so and it
+stays yours — nothing is merged here under someone else's name without credit.
+
+## License
+
+MIT, inherited from helmwave. The original copyright notice is kept in
+[LICENSE](LICENSE) alongside ours, as the license requires.

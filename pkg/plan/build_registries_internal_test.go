@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/registry"
-	"github.com/helmwave/helmwave/pkg/release"
+	"github.com/semx/helmtide/pkg/registry"
+	"github.com/semx/helmtide/pkg/release"
 	"github.com/stretchr/testify/suite"
 	helmRegistry "helm.sh/helm/v3/pkg/registry"
 )

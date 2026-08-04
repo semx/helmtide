@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-getter"
-	"github.com/helmwave/helmwave/pkg/cache"
-	"github.com/helmwave/helmwave/pkg/helper"
-	"github.com/helmwave/helmwave/pkg/plan"
+	"github.com/semx/helmtide/pkg/cache"
+	"github.com/semx/helmtide/pkg/helper"
+	"github.com/semx/helmtide/pkg/plan"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )

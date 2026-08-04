@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/helmwave/helmwave/pkg/helper"
-	"github.com/helmwave/helmwave/pkg/log"
 	"github.com/invopop/jsonschema"
+	"github.com/semx/helmtide/pkg/helper"
+	"github.com/semx/helmtide/pkg/log"
 	"gopkg.in/yaml.v3"
 	helm "helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/repo"

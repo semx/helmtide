@@ -3,8 +3,8 @@ package plan
 import (
 	"context"
 
-	"github.com/helmwave/helmwave/pkg/clictx"
-	"github.com/helmwave/helmwave/pkg/release"
+	"github.com/semx/helmtide/pkg/clictx"
+	"github.com/semx/helmtide/pkg/release"
 	log "github.com/sirupsen/logrus"
 )
 

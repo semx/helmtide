@@ -7,12 +7,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/helmwave/helmwave/pkg/helper"
+	"github.com/semx/helmtide/pkg/helper"
 
-	"github.com/helmwave/helmwave/pkg/action"
-	"github.com/helmwave/helmwave/pkg/cache"
-	logSetup "github.com/helmwave/helmwave/pkg/log"
-	helmwave "github.com/helmwave/helmwave/pkg/version"
+	"github.com/semx/helmtide/pkg/action"
+	"github.com/semx/helmtide/pkg/cache"
+	logSetup "github.com/semx/helmtide/pkg/log"
+	helmwave "github.com/semx/helmtide/pkg/version"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )

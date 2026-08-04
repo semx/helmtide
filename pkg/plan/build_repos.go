@@ -3,8 +3,8 @@ package plan
 import (
 	"os"
 
-	"github.com/helmwave/helmwave/pkg/release"
-	"github.com/helmwave/helmwave/pkg/repo"
+	"github.com/semx/helmtide/pkg/release"
+	"github.com/semx/helmtide/pkg/repo"
 	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/registry"
 )

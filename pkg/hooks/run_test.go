@@ -6,8 +6,8 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/hooks"
-	"github.com/helmwave/helmwave/tests"
+	"github.com/semx/helmtide/pkg/hooks"
+	"github.com/semx/helmtide/tests"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"

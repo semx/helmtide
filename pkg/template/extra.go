@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/google/shlex"
-	"github.com/helmwave/helmwave/pkg/parallel"
+	"github.com/semx/helmtide/pkg/parallel"
 	"gopkg.in/yaml.v3"
 )
 

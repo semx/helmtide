@@ -3,7 +3,7 @@ package action_test
 import (
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/action"
+	"github.com/semx/helmtide/pkg/action"
 	"github.com/stretchr/testify/suite"
 )
 

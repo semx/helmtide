@@ -6,8 +6,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/release"
-	"github.com/helmwave/helmwave/tests"
+	"github.com/semx/helmtide/pkg/release"
+	"github.com/semx/helmtide/tests"
 	"github.com/stretchr/testify/suite"
 )
 

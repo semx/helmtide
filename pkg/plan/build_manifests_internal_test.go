@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/release/uniqname"
-	"github.com/helmwave/helmwave/tests"
+	"github.com/semx/helmtide/pkg/release/uniqname"
+	"github.com/semx/helmtide/tests"
 	"github.com/stretchr/testify/suite"
 	helmRelease "helm.sh/helm/v3/pkg/release"
 )

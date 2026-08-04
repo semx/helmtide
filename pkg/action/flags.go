@@ -4,21 +4,32 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/helmwave/helmwave/pkg/cache"
-	logSetup "github.com/helmwave/helmwave/pkg/log"
-	"github.com/helmwave/helmwave/pkg/plan"
-	"github.com/helmwave/helmwave/pkg/template"
+	"github.com/semx/helmtide/pkg/cache"
+	logSetup "github.com/semx/helmtide/pkg/log"
+	"github.com/semx/helmtide/pkg/plan"
+	"github.com/semx/helmtide/pkg/template"
 	"github.com/urfave/cli/v2"
 )
 
-const ROOT_PREFIX = "HELMWAVE_"
+const (
+	ROOT_PREFIX = "HELMTIDE_"
 
-// EnvVars helper function for HELMWAVE environment variables.
+	// LegacyPrefix keeps the environment variables of helmwave, which helmtide
+	// was forked from, working. urfave/cli takes the first name that is set, so
+	// HELMTIDE_ wins where both are present.
+	LegacyPrefix = "HELMWAVE_"
+)
+
+// EnvVars helper function for HELMTIDE environment variables. Every name is
+// also offered under the legacy HELMWAVE_ prefix so an existing setup keeps
+// working unchanged.
 func EnvVars(names ...string) []string {
-	a := make([]string, 0, len(names))
+	a := make([]string, 0, len(names)*2)
 	for _, name := range names {
-		s := strings.ToUpper(ROOT_PREFIX + name)
-		a = append(a, s)
+		a = append(a, strings.ToUpper(ROOT_PREFIX+name))
+	}
+	for _, name := range names {
+		a = append(a, strings.ToUpper(LegacyPrefix+name))
 	}
 
 	return a
@@ -71,7 +82,7 @@ func flagYmlFile(v *string) cli.Flag {
 		Name:        "file",
 		Category:    "YML",
 		Aliases:     []string{"f"},
-		Value:       plan.Body,
+		Value:       plan.DefaultBody(),
 		Usage:       "main yml file",
 		EnvVars:     EnvVars("YAML", "YML"),
 		Destination: v,
@@ -83,7 +94,7 @@ func flagTplFile(v *string) cli.Flag {
 	return &cli.PathFlag{
 		Name:        "tpl",
 		Category:    "YML",
-		Value:       "helmwave.yml.tpl",
+		Value:       plan.DefaultTpl(),
 		Usage:       "main tpl file",
 		EnvVars:     EnvVars("TPL"),
 		Destination: v,

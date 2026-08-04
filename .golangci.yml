@@ -479,7 +479,7 @@ linters:
         - context
         - encoding/*
         - github.com/pkg/*
-        - github.com/helmwave/helmwave/*
+        - github.com/semx/helmtide/*
     wsl:
       strict-append: true
       allow-assign-and-call: true

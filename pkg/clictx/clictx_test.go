@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/clictx"
+	"github.com/semx/helmtide/pkg/clictx"
 	"github.com/stretchr/testify/suite"
 )
 

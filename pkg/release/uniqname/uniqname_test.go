@@ -3,7 +3,7 @@ package uniqname_test
 import (
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/release/uniqname"
+	"github.com/semx/helmtide/pkg/release/uniqname"
 	"github.com/stretchr/testify/suite"
 )
 

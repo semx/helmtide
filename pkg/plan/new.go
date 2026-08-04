@@ -7,29 +7,39 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/helmwave/helmwave/pkg/release/dependency"
+	"github.com/semx/helmtide/pkg/release/dependency"
 
-	"github.com/helmwave/helmwave/pkg/helper"
-	"github.com/helmwave/helmwave/pkg/hooks"
-	"github.com/helmwave/helmwave/pkg/monitor"
-	"github.com/helmwave/helmwave/pkg/registry"
-	"github.com/helmwave/helmwave/pkg/release"
-	"github.com/helmwave/helmwave/pkg/release/uniqname"
-	"github.com/helmwave/helmwave/pkg/repo"
-	"github.com/helmwave/helmwave/pkg/version"
+	"github.com/semx/helmtide/pkg/helper"
+	"github.com/semx/helmtide/pkg/hooks"
+	"github.com/semx/helmtide/pkg/monitor"
+	"github.com/semx/helmtide/pkg/registry"
+	"github.com/semx/helmtide/pkg/release"
+	"github.com/semx/helmtide/pkg/release/uniqname"
+	"github.com/semx/helmtide/pkg/repo"
+	"github.com/semx/helmtide/pkg/version"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
 const (
 	// Dir is the default directory for generated files.
-	Dir = ".helmwave/"
+	Dir = ".helmtide/"
 
 	// File is the default file name for planfile.
 	File = "planfile"
 
 	// Body is a default file name for the main config.
-	Body = "helmwave.yml"
+	Body = "helmtide.yml"
+
+	// LegacyBody is the config file name of helmwave, which helmtide was forked
+	// from. It is still accepted so an existing repository works unchanged.
+	LegacyBody = "helmwave.yml"
+
+	// Tpl is the default template for the main config.
+	Tpl = "helmtide.yml.tpl"
+
+	// LegacyTpl is the template name inherited from helmwave, still accepted.
+	LegacyTpl = "helmwave.yml.tpl"
 
 	// Manifest is the default directory under Dir for manifests.
 	Manifest = "manifest/"

@@ -3,11 +3,11 @@ package plan
 import (
 	"os"
 
-	"github.com/helmwave/helmwave/pkg/monitor"
-	"github.com/helmwave/helmwave/pkg/registry"
-	"github.com/helmwave/helmwave/pkg/release"
-	"github.com/helmwave/helmwave/pkg/release/uniqname"
-	"github.com/helmwave/helmwave/pkg/repo"
+	"github.com/semx/helmtide/pkg/monitor"
+	"github.com/semx/helmtide/pkg/registry"
+	"github.com/semx/helmtide/pkg/release"
+	"github.com/semx/helmtide/pkg/release/uniqname"
+	"github.com/semx/helmtide/pkg/repo"
 	log "github.com/sirupsen/logrus"
 )
 

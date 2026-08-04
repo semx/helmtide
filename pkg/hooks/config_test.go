@@ -3,8 +3,8 @@ package hooks_test
 import (
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/hooks"
 	"github.com/invopop/jsonschema"
+	"github.com/semx/helmtide/pkg/hooks"
 	"github.com/stretchr/testify/suite"
 )
 

@@ -3,7 +3,7 @@ package kubedog_test
 import (
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/kubedog"
+	"github.com/semx/helmtide/pkg/kubedog"
 	"github.com/stretchr/testify/suite"
 )
 

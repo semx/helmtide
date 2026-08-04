@@ -7,8 +7,8 @@ import (
 	dgraph "github.com/helmwave/asciigraph"
 	"github.com/helmwave/asciigraph/ascii"
 	"github.com/helmwave/asciigraph/core"
-	"github.com/helmwave/helmwave/pkg/helper"
-	"github.com/helmwave/helmwave/pkg/release"
+	"github.com/semx/helmtide/pkg/helper"
+	"github.com/semx/helmtide/pkg/release"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/plan"
+	"github.com/semx/helmtide/pkg/plan"
 	"github.com/stretchr/testify/suite"
 	"helm.sh/helm/v3/pkg/chart"
 	helmRelease "helm.sh/helm/v3/pkg/release"

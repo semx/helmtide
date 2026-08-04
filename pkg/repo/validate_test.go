@@ -3,7 +3,7 @@ package repo_test
 import (
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/repo"
+	"github.com/semx/helmtide/pkg/repo"
 
 	"github.com/stretchr/testify/suite"
 )

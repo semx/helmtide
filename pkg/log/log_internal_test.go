@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/helper"
-	"github.com/helmwave/helmwave/pkg/kubedog"
-	"github.com/helmwave/helmwave/tests"
 	formatter "github.com/helmwave/logrus-emoji-formatter"
+	"github.com/semx/helmtide/pkg/helper"
+	"github.com/semx/helmtide/pkg/kubedog"
+	"github.com/semx/helmtide/tests"
 	log "github.com/sirupsen/logrus"
 	logTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/suite"

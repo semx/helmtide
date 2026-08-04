@@ -1,4 +1,4 @@
-module github.com/helmwave/helmwave
+module github.com/semx/helmtide
 
 go 1.25.8
 

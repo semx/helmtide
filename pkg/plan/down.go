@@ -3,9 +3,9 @@ package plan
 import (
 	"context"
 
-	"github.com/helmwave/helmwave/pkg/parallel"
-	"github.com/helmwave/helmwave/pkg/release"
-	"github.com/helmwave/helmwave/pkg/release/dependency"
+	"github.com/semx/helmtide/pkg/parallel"
+	"github.com/semx/helmtide/pkg/release"
+	"github.com/semx/helmtide/pkg/release/dependency"
 	log "github.com/sirupsen/logrus"
 )
 

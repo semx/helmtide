@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/helmwave/helmwave/pkg/action"
+	"github.com/semx/helmtide/pkg/action"
 	"github.com/urfave/cli/v2"
 )
 

@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/helmwave/helmwave/pkg/helper"
-	"github.com/helmwave/helmwave/pkg/hooks"
-	"github.com/helmwave/helmwave/pkg/release/uniqname"
+	"github.com/semx/helmtide/pkg/helper"
+	"github.com/semx/helmtide/pkg/hooks"
+	"github.com/semx/helmtide/pkg/release/uniqname"
 	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/chartutil"
 	helm "helm.sh/helm/v3/pkg/cli"

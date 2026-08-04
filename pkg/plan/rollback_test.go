@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/kubedog"
-	"github.com/helmwave/helmwave/pkg/plan"
-	"github.com/helmwave/helmwave/tests"
+	"github.com/semx/helmtide/pkg/kubedog"
+	"github.com/semx/helmtide/pkg/plan"
+	"github.com/semx/helmtide/tests"
 	"github.com/stretchr/testify/suite"
 )
 

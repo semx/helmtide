@@ -3,7 +3,7 @@ package monitor_test
 import (
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/registry"
+	"github.com/semx/helmtide/pkg/registry"
 	"github.com/stretchr/testify/suite"
 )
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/helmwave/helmwave/pkg/helper"
+	"github.com/semx/helmtide/pkg/helper"
 )
 
 const (

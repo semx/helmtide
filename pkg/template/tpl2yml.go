@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/helmwave/helmwave/pkg/helper"
+	"github.com/semx/helmtide/pkg/helper"
 	log "github.com/sirupsen/logrus"
 )
 

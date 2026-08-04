@@ -3,8 +3,8 @@ package plan
 import (
 	"context"
 
-	"github.com/helmwave/helmwave/pkg/helper"
-	"github.com/helmwave/helmwave/pkg/release"
+	"github.com/semx/helmtide/pkg/helper"
+	"github.com/semx/helmtide/pkg/release"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )

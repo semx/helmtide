@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/kubedog"
-	"github.com/helmwave/helmwave/pkg/template"
-	"github.com/helmwave/helmwave/tests"
+	"github.com/semx/helmtide/pkg/kubedog"
+	"github.com/semx/helmtide/pkg/template"
+	"github.com/semx/helmtide/tests"
 	"github.com/stretchr/testify/suite"
 	"github.com/urfave/cli/v2"
 )

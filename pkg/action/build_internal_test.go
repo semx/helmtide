@@ -8,14 +8,14 @@ import (
 	"testing"
 
 	"github.com/databus23/helm-diff/v3/diff"
-	"github.com/helmwave/helmwave/pkg/cache"
-	"github.com/helmwave/helmwave/pkg/helper"
-	"github.com/helmwave/helmwave/pkg/hooks"
-	"github.com/helmwave/helmwave/pkg/plan"
-	"github.com/helmwave/helmwave/pkg/release"
-	"github.com/helmwave/helmwave/pkg/repo"
-	"github.com/helmwave/helmwave/pkg/template"
-	"github.com/helmwave/helmwave/tests"
+	"github.com/semx/helmtide/pkg/cache"
+	"github.com/semx/helmtide/pkg/helper"
+	"github.com/semx/helmtide/pkg/hooks"
+	"github.com/semx/helmtide/pkg/plan"
+	"github.com/semx/helmtide/pkg/release"
+	"github.com/semx/helmtide/pkg/repo"
+	"github.com/semx/helmtide/pkg/template"
+	"github.com/semx/helmtide/tests"
 	log "github.com/sirupsen/logrus"
 	logTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/suite"
@@ -439,7 +439,7 @@ func (ts *NonParallelBuildTestSuite) TestRemoteSource() {
 		plandir:      plan.Dir,
 		tags:         cli.StringSlice{},
 		options:      plan.BuildOptions{},
-		remoteSource: "github.com/helmwave/helmwave/.",
+		remoteSource: "github.com/semx/helmtide/.",
 		yml:          y,
 	}
 

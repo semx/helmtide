@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
-	"github.com/helmwave/helmwave/pkg/parallel"
+	"github.com/semx/helmtide/pkg/parallel"
 	log "github.com/sirupsen/logrus"
 )
 

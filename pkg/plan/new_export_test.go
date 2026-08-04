@@ -1,10 +1,10 @@
 package plan
 
 import (
-	"github.com/helmwave/helmwave/pkg/helper"
-	regi "github.com/helmwave/helmwave/pkg/registry"
-	"github.com/helmwave/helmwave/pkg/release"
-	"github.com/helmwave/helmwave/pkg/repo"
+	"github.com/semx/helmtide/pkg/helper"
+	regi "github.com/semx/helmtide/pkg/registry"
+	"github.com/semx/helmtide/pkg/release"
+	"github.com/semx/helmtide/pkg/repo"
 )
 
 func (p *Plan) NewBody() *planBody {

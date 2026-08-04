@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/kubedog"
-	"github.com/helmwave/helmwave/pkg/release"
-	"github.com/helmwave/helmwave/pkg/release/uniqname"
+	"github.com/semx/helmtide/pkg/kubedog"
+	"github.com/semx/helmtide/pkg/release"
+	"github.com/semx/helmtide/pkg/release/uniqname"
 	"github.com/stretchr/testify/suite"
 	helmRelease "helm.sh/helm/v3/pkg/release"
 )

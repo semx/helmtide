@@ -1,8 +1,8 @@
 package plan
 
 import (
-	regi "github.com/helmwave/helmwave/pkg/registry"
-	"github.com/helmwave/helmwave/pkg/release"
+	regi "github.com/semx/helmtide/pkg/registry"
+	"github.com/semx/helmtide/pkg/release"
 	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/registry"
 )

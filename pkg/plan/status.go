@@ -6,7 +6,7 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/helmwave/helmwave/pkg/release"
+	"github.com/semx/helmtide/pkg/release"
 	log "github.com/sirupsen/logrus"
 )
 

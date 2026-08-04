@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/hooks"
-	"github.com/helmwave/helmwave/pkg/release"
-	"github.com/helmwave/helmwave/pkg/release/uniqname"
+	"github.com/semx/helmtide/pkg/hooks"
+	"github.com/semx/helmtide/pkg/release"
+	"github.com/semx/helmtide/pkg/release/uniqname"
 	"github.com/stretchr/testify/suite"
 )
 

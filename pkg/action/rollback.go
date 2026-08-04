@@ -3,8 +3,8 @@ package action
 import (
 	"context"
 
-	"github.com/helmwave/helmwave/pkg/kubedog"
-	"github.com/helmwave/helmwave/pkg/plan"
+	"github.com/semx/helmtide/pkg/kubedog"
+	"github.com/semx/helmtide/pkg/plan"
 	"github.com/urfave/cli/v2"
 )
 

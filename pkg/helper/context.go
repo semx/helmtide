@@ -3,7 +3,7 @@ package helper
 import (
 	"context"
 
-	"github.com/helmwave/helmwave/pkg/release/uniqname"
+	"github.com/semx/helmtide/pkg/release/uniqname"
 )
 
 type contextReleaseUniqKey struct{}

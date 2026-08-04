@@ -3,10 +3,10 @@ package action
 import (
 	"context"
 
-	"github.com/helmwave/helmwave/pkg/clictx"
-	"github.com/helmwave/helmwave/pkg/helper"
-	"github.com/helmwave/helmwave/pkg/kubedog"
-	"github.com/helmwave/helmwave/pkg/plan"
+	"github.com/semx/helmtide/pkg/clictx"
+	"github.com/semx/helmtide/pkg/helper"
+	"github.com/semx/helmtide/pkg/kubedog"
+	"github.com/semx/helmtide/pkg/plan"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )

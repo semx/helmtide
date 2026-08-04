@@ -2,7 +2,7 @@ package action
 
 import (
 	"github.com/databus23/helm-diff/v3/diff"
-	logSetup "github.com/helmwave/helmwave/pkg/log"
+	logSetup "github.com/semx/helmtide/pkg/log"
 	"github.com/urfave/cli/v2"
 )
 

@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/helmwave/helmwave/pkg/action"
-	helmwave "github.com/helmwave/helmwave/pkg/version"
+	"github.com/semx/helmtide/pkg/action"
+	helmwave "github.com/semx/helmtide/pkg/version"
 	"github.com/urfave/cli/v2"
 )
 

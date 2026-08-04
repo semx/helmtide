@@ -1,6 +1,6 @@
 package kubedog
 
-import "github.com/helmwave/helmwave/pkg/helper"
+import "github.com/semx/helmtide/pkg/helper"
 
 const (
 	// TrackTerminationModeAnnoName annotation allows to specify how to track resource.

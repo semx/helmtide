@@ -3,7 +3,7 @@ package action
 import (
 	"time"
 
-	"github.com/helmwave/helmwave/pkg/kubedog"
+	"github.com/semx/helmtide/pkg/kubedog"
 	"github.com/urfave/cli/v2"
 )
 

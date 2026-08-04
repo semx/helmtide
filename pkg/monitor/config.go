@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/helmwave/helmwave/pkg/monitor/http"
-	"github.com/helmwave/helmwave/pkg/monitor/prometheus"
+	"github.com/semx/helmtide/pkg/monitor/http"
+	"github.com/semx/helmtide/pkg/monitor/prometheus"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )

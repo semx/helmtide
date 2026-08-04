@@ -9,17 +9,17 @@ before:
 ###
 
 nix:
-  - url_template: "https://github.com/helmwave/helmwave/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    name: helmwave
-    ids: [ helmwave ]
+  - url_template: "https://github.com/semx/helmtide/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    name: helmtide
+    ids: [ helmtide ]
 
-    homepage: https://helmwave.app/
-    description: "Helmwave is true release management for helm"
+    homepage: https://helmtide.dev/
+    description: "helmtide is a maintained fork of helmwave: release management for helm"
     license: "mit"
 
     # Repository to push the generated files to.
     repository:
-      owner: helmwave
+      owner: semx
       name: NUR
       branch: main
 
@@ -27,7 +27,7 @@ nix:
 
 builds:
   - &bin
-    id: "helmwave"
+    id: "helmtide"
     env:
       - CGO_ENABLED=0
     goarch:
@@ -35,15 +35,15 @@ builds:
       - arm64
     goamd64:
       # Go can build using different instruction sets - https://github.com/golang/go/wiki/MinimumRequirements#amd64
-      # We don't really need this type of optimization (limiting CPUs helmwave can run on) so we use general v1.
+      # We don't really need this type of optimization (limiting CPUs helmtide can run on) so we use general v1.
       - v1
     goos:
       - linux
       # - windows
       - darwin
-    main: ./cmd/helmwave
+    main: ./cmd/helmtide
     ldflags:
-      - -s -w -X github.com/helmwave/helmwave/pkg/version.Version={{ .Version }}
+      - -s -w -X github.com/semx/helmtide/pkg/version.Version={{ .Version }}
 
   #  - <<: *bin
   #    main: ./cmd/schema
@@ -60,13 +60,13 @@ builds:
 ###
 archives:
   - &archive
-    builds: [ helmwave ]
+    builds: [ helmtide ]
     name_template: >-2
       {{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
       {{- with .Arm }}v{{ . }}{{ end -}}
       {{- with .Mips }}_{{ . }}{{ end -}}
       {{- if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end -}}
-    id: helmwave
+    id: helmtide
     format: tar.gz
     format_overrides:
       - goos: windows
@@ -79,9 +79,9 @@ archives:
 
 nfpms:
   - &nfpms
-    id: helmwave
-    maintainer: community@helmwave.app
-    builds: [ helmwave ]
+    id: helmtide
+    maintainer: community@helmtide.dev
+    builds: [ helmtide ]
     formats:
       - apk
       - deb
@@ -97,23 +97,23 @@ checksum:
   name_template: "checksums.txt"
 
 dockers:
-  # helmwave
+  # helmtide
   - dockerfile: Dockerfile
     image_templates:
-      - ghcr.io/helmwave/helmwave:{{ .Version }}-scratch-amd64
-      - ghcr.io/helmwave/helmwave:scratch-amd64
-      - diamon/helmwave:{{ .Version }}-scratch-amd64
-      - diamon/helmwave:scratch-amd64
+      - ghcr.io/semx/helmtide:{{ .Version }}-scratch-amd64
+      - ghcr.io/semx/helmtide:scratch-amd64
+      - diamon/helmtide:{{ .Version }}-scratch-amd64
+      - diamon/helmtide:scratch-amd64
     build_flag_templates:
-      - "--label=org.opencontainers.image.description=Helmwave is true release management for helm"
+      - "--label=org.opencontainers.image.description=helmtide is a maintained fork of helmwave: release management for helm"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.licenses=MIT"
-      - "--label=org.opencontainers.image.source=https://github.com/helmwave/helmwave"
-      - "--label=org.opencontainers.image.url=https://github.com/helmwave/helmwave/pkgs/container/helmwave"
-      - "--label=org.opencontainers.image.documentation=https://helmwave.app/"
+      - "--label=org.opencontainers.image.source=https://github.com/semx/helmtide"
+      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/helmtide"
+      - "--label=org.opencontainers.image.documentation=https://helmtide.dev/"
 
       - "--platform=linux/amd64"
       - "--target=scratch-goreleaser"
@@ -124,20 +124,20 @@ dockers:
     use: buildx
   - dockerfile: Dockerfile
     image_templates:
-      - ghcr.io/helmwave/helmwave:{{ .Version }}-scratch-arm64v8
-      - ghcr.io/helmwave/helmwave:scratch-arm64v8
-      - diamon/helmwave:{{ .Version }}-scratch-arm64v8
-      - diamon/helmwave:scratch-arm64v8
+      - ghcr.io/semx/helmtide:{{ .Version }}-scratch-arm64v8
+      - ghcr.io/semx/helmtide:scratch-arm64v8
+      - diamon/helmtide:{{ .Version }}-scratch-arm64v8
+      - diamon/helmtide:scratch-arm64v8
     build_flag_templates:
-      - "--label=org.opencontainers.image.description=Helmwave is true release management for helm"
+      - "--label=org.opencontainers.image.description=helmtide is a maintained fork of helmwave: release management for helm"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.licenses=MIT"
-      - "--label=org.opencontainers.image.source=https://github.com/helmwave/helmwave"
-      - "--label=org.opencontainers.image.url=https://github.com/helmwave/helmwave/pkgs/container/helmwave"
-      - "--label=org.opencontainers.image.documentation=https://helmwave.app/"
+      - "--label=org.opencontainers.image.source=https://github.com/semx/helmtide"
+      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/helmtide"
+      - "--label=org.opencontainers.image.documentation=https://helmtide.dev/"
 
       - "--platform=linux/arm64/v8"
       - "--target=scratch-goreleaser"
@@ -147,20 +147,20 @@ dockers:
     use: buildx
   - dockerfile: Dockerfile
     image_templates:
-      - ghcr.io/helmwave/helmwave:{{ .Version }}-amd64
-      - ghcr.io/helmwave/helmwave:latest-amd64
-      - diamon/helmwave:{{ .Version }}-amd64
-      - diamon/helmwave:latest-amd64
+      - ghcr.io/semx/helmtide:{{ .Version }}-amd64
+      - ghcr.io/semx/helmtide:latest-amd64
+      - diamon/helmtide:{{ .Version }}-amd64
+      - diamon/helmtide:latest-amd64
     build_flag_templates:
-      - "--label=org.opencontainers.image.description=Helmwave is true release management for helm"
+      - "--label=org.opencontainers.image.description=helmtide is a maintained fork of helmwave: release management for helm"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.licenses=MIT"
-      - "--label=org.opencontainers.image.source=https://github.com/helmwave/helmwave"
-      - "--label=org.opencontainers.image.url=https://github.com/helmwave/helmwave/pkgs/container/helmwave"
-      - "--label=org.opencontainers.image.documentation=https://helmwave.app/"
+      - "--label=org.opencontainers.image.source=https://github.com/semx/helmtide"
+      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/helmtide"
+      - "--label=org.opencontainers.image.documentation=https://helmtide.dev/"
 
       - "--platform=linux/amd64"
       - "--target=goreleaser"
@@ -171,20 +171,20 @@ dockers:
     use: buildx
   - dockerfile: Dockerfile
     image_templates:
-      - ghcr.io/helmwave/helmwave:{{ .Version }}-arm64v8
-      - ghcr.io/helmwave/helmwave:latest-arm64v8
-      - diamon/helmwave:{{ .Version }}-arm64v8
-      - diamon/helmwave:latest-arm64v8
+      - ghcr.io/semx/helmtide:{{ .Version }}-arm64v8
+      - ghcr.io/semx/helmtide:latest-arm64v8
+      - diamon/helmtide:{{ .Version }}-arm64v8
+      - diamon/helmtide:latest-arm64v8
     build_flag_templates:
-      - "--label=org.opencontainers.image.description=Helmwave is true release management for helm"
+      - "--label=org.opencontainers.image.description=helmtide is a maintained fork of helmwave: release management for helm"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.licenses=MIT"
-      - "--label=org.opencontainers.image.source=https://github.com/helmwave/helmwave"
-      - "--label=org.opencontainers.image.url=https://github.com/helmwave/helmwave/pkgs/container/helmwave"
-      - "--label=org.opencontainers.image.documentation=https://helmwave.app/"
+      - "--label=org.opencontainers.image.source=https://github.com/semx/helmtide"
+      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/helmtide"
+      - "--label=org.opencontainers.image.documentation=https://helmtide.dev/"
 
       - "--platform=linux/arm64/v8"
       - "--target=goreleaser"
@@ -196,18 +196,18 @@ dockers:
   # gitops
   - dockerfile: Dockerfile
     image_templates:
-      - ghcr.io/helmwave/gitops:{{ .Version }}-scratch-amd64
-      - ghcr.io/helmwave/gitops:scratch-amd64
+      - ghcr.io/helmtide/gitops:{{ .Version }}-scratch-amd64
+      - ghcr.io/helmtide/gitops:scratch-amd64
     build_flag_templates:
-      - "--label=org.opencontainers.image.description=GitOps plugin for helmwave"
+      - "--label=org.opencontainers.image.description=GitOps plugin for helmtide"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.title=gitops"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.licenses=MIT"
-      - "--label=org.opencontainers.image.source=https://github.com/helmwave/helmwave"
-      - "--label=org.opencontainers.image.url=https://github.com/helmwave/helmwave/pkgs/container/gitops"
-      - "--label=org.opencontainers.image.documentation=https://helmwave.app/"
+      - "--label=org.opencontainers.image.source=https://github.com/semx/helmtide"
+      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/gitops"
+      - "--label=org.opencontainers.image.documentation=https://helmtide.dev/"
 
       - "--platform=linux/amd64"
       - "--target=scratch-goreleaser"
@@ -219,18 +219,18 @@ dockers:
     use: buildx
   - dockerfile: Dockerfile
     image_templates:
-      - ghcr.io/helmwave/gitops:{{ .Version }}-scratch-arm64v8
-      - ghcr.io/helmwave/gitops:scratch-arm64v8
+      - ghcr.io/helmtide/gitops:{{ .Version }}-scratch-arm64v8
+      - ghcr.io/helmtide/gitops:scratch-arm64v8
     build_flag_templates:
-      - "--label=org.opencontainers.image.description=GitOps plugin for helmwave"
+      - "--label=org.opencontainers.image.description=GitOps plugin for helmtide"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.title=gitops"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.licenses=MIT"
-      - "--label=org.opencontainers.image.source=https://github.com/helmwave/helmwave"
-      - "--label=org.opencontainers.image.url=https://github.com/helmwave/helmwave/pkgs/container/gitops"
-      - "--label=org.opencontainers.image.documentation=https://helmwave.app/"
+      - "--label=org.opencontainers.image.source=https://github.com/semx/helmtide"
+      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/gitops"
+      - "--label=org.opencontainers.image.documentation=https://helmtide.dev/"
 
       - "--platform=linux/arm64/v8"
       - "--target=scratch-goreleaser"
@@ -241,18 +241,18 @@ dockers:
     use: buildx
   - dockerfile: Dockerfile
     image_templates:
-      - ghcr.io/helmwave/gitops:{{ .Version }}-amd64
-      - ghcr.io/helmwave/gitops:latest-amd64
+      - ghcr.io/helmtide/gitops:{{ .Version }}-amd64
+      - ghcr.io/helmtide/gitops:latest-amd64
     build_flag_templates:
-      - "--label=org.opencontainers.image.description=GitOps plugin for helmwave"
+      - "--label=org.opencontainers.image.description=GitOps plugin for helmtide"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.title=gitops"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.licenses=MIT"
-      - "--label=org.opencontainers.image.source=https://github.com/helmwave/helmwave"
-      - "--label=org.opencontainers.image.url=https://github.com/helmwave/helmwave/pkgs/container/gitops"
-      - "--label=org.opencontainers.image.documentation=https://helmwave.app/"
+      - "--label=org.opencontainers.image.source=https://github.com/semx/helmtide"
+      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/gitops"
+      - "--label=org.opencontainers.image.documentation=https://helmtide.dev/"
 
       - "--platform=linux/amd64"
       - "--target=goreleaser"
@@ -264,18 +264,18 @@ dockers:
     use: buildx
   - dockerfile: Dockerfile
     image_templates:
-      - ghcr.io/helmwave/gitops:{{ .Version }}-arm64v8
-      - ghcr.io/helmwave/gitops:latest-arm64v8
+      - ghcr.io/helmtide/gitops:{{ .Version }}-arm64v8
+      - ghcr.io/helmtide/gitops:latest-arm64v8
     build_flag_templates:
-      - "--label=org.opencontainers.image.description=GitOps plugin for helmwave"
+      - "--label=org.opencontainers.image.description=GitOps plugin for helmtide"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.title=gitops"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.licenses=MIT"
-      - "--label=org.opencontainers.image.source=https://github.com/helmwave/helmwave"
-      - "--label=org.opencontainers.image.url=https://github.com/helmwave/helmwave/pkgs/container/gitops"
-      - "--label=org.opencontainers.image.documentation=https://helmwave.app/"
+      - "--label=org.opencontainers.image.source=https://github.com/semx/helmtide"
+      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/gitops"
+      - "--label=org.opencontainers.image.documentation=https://helmtide.dev/"
 
       - "--platform=linux/arm64/v8"
       - "--target=goreleaser"
@@ -286,59 +286,59 @@ dockers:
     use: buildx
 
 docker_manifests:
-  # helmwave: GitHub Container Registry
-  - name_template: ghcr.io/helmwave/helmwave:{{ .Version }}-scratch
+  # helmtide: GitHub Container Registry
+  - name_template: ghcr.io/semx/helmtide:{{ .Version }}-scratch
     image_templates:
-      - ghcr.io/helmwave/helmwave:{{ .Version }}-scratch-amd64
-      - ghcr.io/helmwave/helmwave:{{ .Version }}-scratch-arm64v8
-  - name_template: ghcr.io/helmwave/helmwave:scratch
+      - ghcr.io/semx/helmtide:{{ .Version }}-scratch-amd64
+      - ghcr.io/semx/helmtide:{{ .Version }}-scratch-arm64v8
+  - name_template: ghcr.io/semx/helmtide:scratch
     image_templates:
-      - ghcr.io/helmwave/helmwave:scratch-amd64
-      - ghcr.io/helmwave/helmwave:scratch-arm64v8
-  - name_template: ghcr.io/helmwave/helmwave:{{ .Version }}
+      - ghcr.io/semx/helmtide:scratch-amd64
+      - ghcr.io/semx/helmtide:scratch-arm64v8
+  - name_template: ghcr.io/semx/helmtide:{{ .Version }}
     image_templates:
-      - ghcr.io/helmwave/helmwave:{{ .Version }}-amd64
-      - ghcr.io/helmwave/helmwave:{{ .Version }}-arm64v8
-  - name_template: ghcr.io/helmwave/helmwave:latest
+      - ghcr.io/semx/helmtide:{{ .Version }}-amd64
+      - ghcr.io/semx/helmtide:{{ .Version }}-arm64v8
+  - name_template: ghcr.io/semx/helmtide:latest
     image_templates:
-      - ghcr.io/helmwave/helmwave:latest-amd64
-      - ghcr.io/helmwave/helmwave:latest-arm64v8
+      - ghcr.io/semx/helmtide:latest-amd64
+      - ghcr.io/semx/helmtide:latest-arm64v8
 
   # gitops: GitHub Container Registry
-  - name_template: ghcr.io/helmwave/gitops:{{ .Version }}-scratch
+  - name_template: ghcr.io/helmtide/gitops:{{ .Version }}-scratch
     image_templates:
-      - ghcr.io/helmwave/gitops:{{ .Version }}-scratch-amd64
-      - ghcr.io/helmwave/gitops:{{ .Version }}-scratch-arm64v8
-  - name_template: ghcr.io/helmwave/gitops:scratch
+      - ghcr.io/helmtide/gitops:{{ .Version }}-scratch-amd64
+      - ghcr.io/helmtide/gitops:{{ .Version }}-scratch-arm64v8
+  - name_template: ghcr.io/helmtide/gitops:scratch
     image_templates:
-      - ghcr.io/helmwave/gitops:scratch-amd64
-      - ghcr.io/helmwave/gitops:scratch-arm64v8
-  - name_template: ghcr.io/helmwave/gitops:{{ .Version }}
+      - ghcr.io/helmtide/gitops:scratch-amd64
+      - ghcr.io/helmtide/gitops:scratch-arm64v8
+  - name_template: ghcr.io/helmtide/gitops:{{ .Version }}
     image_templates:
-      - ghcr.io/helmwave/gitops:{{ .Version }}-amd64
-      - ghcr.io/helmwave/gitops:{{ .Version }}-arm64v8
-  - name_template: ghcr.io/helmwave/gitops:latest
+      - ghcr.io/helmtide/gitops:{{ .Version }}-amd64
+      - ghcr.io/helmtide/gitops:{{ .Version }}-arm64v8
+  - name_template: ghcr.io/helmtide/gitops:latest
     image_templates:
-      - ghcr.io/helmwave/gitops:latest-amd64
-      - ghcr.io/helmwave/gitops:latest-arm64v8
+      - ghcr.io/helmtide/gitops:latest-amd64
+      - ghcr.io/helmtide/gitops:latest-arm64v8
 
-  # helmwave: DockerHub
-  - name_template: diamon/helmwave:{{ .Version }}
+  # helmtide: DockerHub
+  - name_template: diamon/helmtide:{{ .Version }}
     image_templates:
-      - diamon/helmwave:{{ .Version }}-amd64
-      - diamon/helmwave:{{ .Version }}-arm64v8
-  - name_template: diamon/helmwave:latest
+      - diamon/helmtide:{{ .Version }}-amd64
+      - diamon/helmtide:{{ .Version }}-arm64v8
+  - name_template: diamon/helmtide:latest
     image_templates:
-      - diamon/helmwave:latest-amd64
-      - diamon/helmwave:latest-arm64v8
-  - name_template: diamon/helmwave:{{ .Version }}-scratch
+      - diamon/helmtide:latest-amd64
+      - diamon/helmtide:latest-arm64v8
+  - name_template: diamon/helmtide:{{ .Version }}-scratch
     image_templates:
-      - diamon/helmwave:{{ .Version }}-scratch-amd64
-      - diamon/helmwave:{{ .Version }}-scratch-arm64v8
-  - name_template: diamon/helmwave:scratch
+      - diamon/helmtide:{{ .Version }}-scratch-amd64
+      - diamon/helmtide:{{ .Version }}-scratch-arm64v8
+  - name_template: diamon/helmtide:scratch
     image_templates:
-      - diamon/helmwave:scratch-amd64
-      - diamon/helmwave:scratch-arm64v8
+      - diamon/helmtide:scratch-amd64
+      - diamon/helmtide:scratch-arm64v8
 
 
 ###
@@ -390,26 +390,26 @@ release:
   prerelease: auto
 
 brews:
-  - ids: [ helmwave ]
+  - ids: [ helmtide ]
     repository:
-      owner: helmwave
+      owner: helmtide
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
       pull_request:
         enabled: false
     goamd64: v1
-    homepage: https://helmwave.app/
-    description: "Helmwave is true release management for helm"
+    homepage: https://helmtide.dev/
+    description: "helmtide is a maintained fork of helmwave: release management for helm"
     license: MIT
     directory: Formula
     skip_upload: auto
 
     custom_block: |
-      head "https://github.com/helmwave/helmwave.git", branch: "main"
+      head "https://github.com/semx/helmtide.git", branch: "main"
     test: |
-      assert_match version.to_s, shell_output("#{bin/"helmwave"} --version")
+      assert_match version.to_s, shell_output("#{bin/"helmtide"} --version")
     extra_install: |
-      generate_completions_from_executable(bin/"helmwave", "completion", shells: [:bash, :zsh])
+      generate_completions_from_executable(bin/"helmtide", "completion", shells: [:bash, :zsh])
 
 milestones:
   - close: true
@@ -427,5 +427,5 @@ announce:
     enabled: true
     chat_id: -1001484486010
     message_template: |
-      Helmwave *{{ replace .Tag "." "\\." }}* is ready\!
-      See more: https://github\.com/helmwave/helmwave/releases/tag/{{ replace .Tag "." "\\." }}
+      helmtide *{{ replace .Tag "." "\\." }}* is ready\!
+      See more: https://github\.com/semx/helmtide/releases/tag/{{ replace .Tag "." "\\." }}

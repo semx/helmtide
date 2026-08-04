@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/helmwave/helmwave/pkg/helper"
-	"github.com/helmwave/helmwave/pkg/parallel"
-	"github.com/helmwave/helmwave/pkg/release"
+	"github.com/semx/helmtide/pkg/helper"
+	"github.com/semx/helmtide/pkg/parallel"
+	"github.com/semx/helmtide/pkg/release"
 	log "github.com/sirupsen/logrus"
 )
 

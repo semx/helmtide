@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/helmwave/helmwave/pkg/repo"
+	"github.com/semx/helmtide/pkg/repo"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"helm.sh/helm/v3/pkg/cli"

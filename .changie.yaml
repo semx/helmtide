@@ -6,7 +6,7 @@ versionExt: md
 versionFormat: "# {{ .Version }}"
 kindFormat: "### {{ .Kind }}"
 changeFormat: |
-  * {{ if ne .Custom.Issue "" }}[#{{ .Custom.Issue }}](https://github.com/helmwave/helmwave/issues/{{ .Custom.Issue }}) {{ end }}{{ .Body }} (@{{ .Custom.Author }})
+  * {{ if ne .Custom.Issue "" }}[#{{ .Custom.Issue }}](https://github.com/semx/helmtide/issues/{{ .Custom.Issue }}) {{ end }}{{ .Body }} (@{{ .Custom.Author }})
 
 custom:
   - key: Issue
