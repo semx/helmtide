@@ -76,6 +76,21 @@ func (r *MockReleaseConfig) SyncDryRun(ctx context.Context, runHooks bool) (*hel
 	r.DryRun(true)
 	defer r.DryRun(false)
 
+	// Mirror release.config.Sync: with runHooks in dry-run mode it is the build
+	// lifecycle that runs, not the up one. Without this the mock silently swallows
+	// the invocation, which is how a duplicate pre_build call went unnoticed.
+	if runHooks {
+		lifecycle := r.Lifecycle()
+
+		if err := lifecycle.RunPreBuild(ctx); err != nil {
+			return nil, err
+		}
+
+		defer func() {
+			_ = lifecycle.RunPostBuild(ctx)
+		}()
+	}
+
 	return r.Sync(ctx, runHooks)
 }
 

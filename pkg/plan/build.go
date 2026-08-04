@@ -48,7 +48,7 @@ func (p *Plan) Build(ctx context.Context, o BuildOptions) (err error) {
 }
 
 func (p *Plan) build(ctx context.Context, o BuildOptions) (err error) {
-	p.body.Releases, err = p.buildReleases(ctx, o)
+	p.body.Releases, err = p.buildReleases(o)
 	if err != nil {
 		return err
 	}
@@ -74,11 +74,6 @@ func (p *Plan) build(ctx context.Context, o BuildOptions) (err error) {
 	}
 
 	err = p.syncRegistries(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = p.buildCharts()
 	if err != nil {
 		return err
 	}

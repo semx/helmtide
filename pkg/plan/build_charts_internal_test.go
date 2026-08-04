@@ -16,46 +16,25 @@ func TestBuildChartsTestSuite(t *testing.T) {
 	suite.Run(t, new(BuildChartsTestSuite))
 }
 
-func (ts *BuildRepositoriesTestSuite) TestEmptyReleases() {
+func (ts *BuildChartsTestSuite) TestBuildReleaseChart() {
 	p := New(".")
-	p.NewBody()
 
-	err := p.buildCharts()
+	rel := NewMockReleaseConfig(ts.T())
+	rel.On("DownloadChart").Return(nil)
 
-	ts.Require().NoError(err)
+	ts.Require().NoError(p.buildReleaseChart(rel))
+
+	rel.AssertExpectations(ts.T())
 }
 
-func (ts *BuildRepositoriesTestSuite) TestMultipleReleases() {
+func (ts *BuildChartsTestSuite) TestBuildReleaseChartError() {
 	p := New(".")
 
-	rel1 := NewMockReleaseConfig(ts.T())
-	rel1.On("DownloadChart").Return(nil)
-	rel2 := NewMockReleaseConfig(ts.T())
-	rel2.On("DownloadChart").Return(nil)
-
-	p.SetReleases(rel1, rel2)
-
-	err := p.buildCharts()
-
-	ts.Require().NoError(err)
-	rel1.AssertExpectations(ts.T())
-	rel2.AssertExpectations(ts.T())
-}
-
-func (ts *BuildRepositoriesTestSuite) TestError() {
-	p := New(".")
-
-	rel1 := NewMockReleaseConfig(ts.T())
-	rel1.On("DownloadChart").Return(nil)
-	rel2 := NewMockReleaseConfig(ts.T())
+	rel := NewMockReleaseConfig(ts.T())
 	errExpected := errors.New(ts.T().Name())
-	rel2.On("DownloadChart").Return(errExpected)
+	rel.On("DownloadChart").Return(errExpected)
 
-	p.SetReleases(rel1, rel2)
+	ts.Require().ErrorIs(p.buildReleaseChart(rel), errExpected)
 
-	err := p.buildCharts()
-
-	ts.Require().ErrorIs(err, errExpected)
-	rel1.AssertExpectations(ts.T())
-	rel2.AssertExpectations(ts.T())
+	rel.AssertExpectations(ts.T())
 }
