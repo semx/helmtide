@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>helmtide — a maintained fork of helmwave</title>
-<meta name="description" content="helm3-native release management. A maintained fork of helmwave: dependencies current, a test suite that cannot reach your cluster.">
+<meta name="description" content="Helm 4 release management. A maintained fork of helmwave: no known vulnerabilities, a test suite that cannot reach your cluster.">
 <style>
   :root {
     --bg: #fbfcfd; --fg: #1b1f24; --muted: #5b6570; --line: #e3e8ee;
@@ -67,7 +67,7 @@
 
 <header>
   <h1>helmtide</h1>
-  <p class="tag">helm-native release management for a whole set of releases, from one file.<br>A maintained fork of <a href="https://github.com/helmwave/helmwave">helmwave</a>.</p>
+  <p class="tag">Helm-native release management for a whole set of releases, from one file.<br>A maintained fork of <a href="https://github.com/helmwave/helmwave">helmwave</a>, running on Helm 4.</p>
   <div class="links">
     <a class="primary" href="https://github.com/semx/helmtide">GitHub</a>
     <a href="https://github.com/semx/helmtide#install">Install</a>
@@ -97,17 +97,25 @@ left open and contributions unreviewed since. helmtide picks it up from there.</
 
 <h2>What is different</h2>
 
-<h3>Dependencies are current</h3>
+<h3>It runs on Helm 4</h3>
 
-<p><code>govulncheck</code> reported <span class="num">33</span> vulnerabilities that the
-code actually reaches — among them helm 3.18.4 (panic on malformed YAML, memory
-exhaustion through a crafted JSON schema), go-getter 1.7.8 (symlink attacks,
-reached from <code>downloadRemoteSrc</code>) and go-git 5.13.0 (credentials forwarded
-across a redirect to another host).</p>
+<p>Upstream is on Helm 3, whose support ends in <strong>November 2026</strong>; asking
+for Helm 4 is what people have been doing in its issues. helmtide builds on
+<code>helm.sh/helm/v4</code>. Charts written for Helm 3 keep working — Chart API v2 is
+unchanged in Helm 4.</p>
 
-<p>That is down to <span class="num">4</span>, each with no upstream fix yet, each
-written down with the reason it is still there. CI fails on a new one rather than
-on the ones nobody can fix.</p>
+<h3>No known vulnerabilities</h3>
+
+<p><code>govulncheck</code> reported <span class="num">33</span> that the code actually
+reaches — among them helm 3.18.4 (panic on malformed YAML, memory exhaustion
+through a crafted JSON schema), go-getter 1.7.8 (symlink attacks, reached from
+<code>downloadRemoteSrc</code>) and go-git 5.13.0 (credentials forwarded across a
+redirect to another host).</p>
+
+<p>Updating dependencies took that to <span class="num">4</span>; moving to Helm 4
+took it to <span class="num">0</span>, because containerd and
+<code>x/crypto/openpgp</code> left the module graph with Helm 3's OCI client. CI fails
+on a new one.</p>
 
 <h3>The test suite cannot reach your cluster</h3>
 
@@ -125,9 +133,10 @@ laptop with no cluster and no credentials.</p>
 <p>Reviewed, ported and credited to their authors — a duplicate <code>pre_build</code> hook
 invocation, and <code>offline_kube_version</code> still requiring a live cluster.</p>
 
-<h2>Drop-in</h2>
+<h2>Migrating from helmwave</h2>
 
-<p>An existing helmwave setup runs unchanged.</p>
+<p>An existing setup runs as it is, with one exception — <code>recreate:</code> is gone,
+because Helm 4 has nothing behind it.</p>
 
 <table>
   <thead><tr><th>you have</th><th>helmtide</th></tr></thead>
@@ -135,6 +144,8 @@ invocation, and <code>offline_kube_version</code> still requiring a live cluster
     <tr><td><code>helmwave.yml</code></td><td>used as-is when there is no <code>helmtide.yml</code></td></tr>
     <tr><td><code>helmwave.yml.tpl</code></td><td>same</td></tr>
     <tr><td><code>HELMWAVE_*</code> variables</td><td>still read; <code>HELMTIDE_*</code> wins when both are set</td></tr>
+    <tr><td><code>recreate:</code></td><td><strong>removed</strong> — Helm 4 has no field behind it</td></tr>
+    <tr><td><code>wait: true</code> / <code>false</code></td><td>still accepted; also takes <code>watcher</code>, <code>legacy</code>, <code>hookOnly</code></td></tr>
   </tbody>
 </table>
 

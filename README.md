@@ -2,12 +2,13 @@
 
 **A maintained fork of [helmwave](https://github.com/helmwave/helmwave).**
 
-helmwave is a helm3-native tool for deploying a whole set of Helm releases from
-one file: a planfile you can review before applying, a dependency graph instead
-of a wall of `helm upgrade` calls, and live resource tracking through
+helmwave deploys a whole set of Helm releases from one file: a planfile you can
+review before applying, a dependency graph instead of a wall of `helm upgrade`
+calls, and live resource tracking through
 [kubedog](https://github.com/werf/kubedog). The design is good. It stopped
 receiving releases in December 2025, with its own release pull request left
-open and community contributions unreviewed since.
+open and community contributions unreviewed since — and still builds on Helm 3,
+which reaches end of life in November 2026.
 
 helmtide picks it up from there. This is a fork, not a rewrite, and not a
 replacement blessed by the original authors — the credit for the design and for
@@ -16,12 +17,19 @@ and the helmwave contributors. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
 ## What is different
 
-**Dependencies are current.** `govulncheck` reported 33 vulnerabilities the
-code actually reaches, including helm 3.18.4 (panic on malformed YAML, memory
-exhaustion through a crafted JSON schema), go-getter 1.7.8 (symlink attacks,
-reached from `downloadRemoteSrc`) and go-git 5.13.0 (credentials forwarded
-across a redirect to another host). That is down to 5, and each of those has no
-upstream fix yet or needs a newer Go toolchain.
+**It runs on Helm 4.** Upstream is on Helm 3, whose support ends in November
+2026; asking for Helm 4 is what people have been doing in its issues. helmtide
+builds on `helm.sh/helm/v4`, so charts, releases and the SDK are the supported
+ones. Charts written for Helm 3 keep working — Chart API v2 is unchanged in
+Helm 4.
+
+**No known vulnerabilities.** `govulncheck` reported 33 that the code actually
+reaches, including helm 3.18.4 (panic on malformed YAML, memory exhaustion
+through a crafted JSON schema), go-getter 1.7.8 (symlink attacks, reached from
+`downloadRemoteSrc`) and go-git 5.13.0 (credentials forwarded across a redirect
+to another host). Updating the dependencies took that to 4; moving to Helm 4
+took it to 0, because containerd and `x/crypto/openpgp` left the module graph
+with Helm 3's OCI client. CI fails on a new one.
 
 **The test suite cannot reach your cluster.** Running it used to send helm
 dry-runs at whatever `~/.kube/config` pointed to — on the machine this fork was
@@ -37,9 +45,21 @@ packages, 0 failures. To run the cluster-dependent ones:
 HELMTIDE_TEST_CLUSTER=~/.kube/config-of-a-throwaway-cluster go test ./...
 ```
 
+## Migrating from helmwave
+
+Everything below the table keeps working. One key is gone:
+
+| key | helmtide |
+| --- | --- |
+| `recreate:` | **removed** — Helm 4 has no field behind it |
+| `wait: true` / `false` | still accepted; also takes `watcher`, `legacy`, `hookOnly` |
+
+`wait: true` maps to `watcher` and `false` to `hookOnly`, the same mapping Helm
+uses for its own deprecated `--wait=true/false`.
+
 ## Drop-in
 
-An existing helmwave setup runs unchanged:
+Apart from `recreate:` above, an existing helmwave setup runs unchanged:
 
 | you have | helmtide |
 | --- | --- |
