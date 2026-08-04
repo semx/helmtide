@@ -1,0 +1,62 @@
+name: Vulnerabilities
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - .github/workflows/govulncheck.yml
+      - .github/scripts/govulncheck.sh
+      - .github/govulncheck-baseline.txt
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - .github/workflows/govulncheck.yml
+      - .github/scripts/govulncheck.sh
+      - .github/govulncheck-baseline.txt
+  # Advisories are published without our code changing, so scan on a timer too.
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          # Not go.mod. The `go` directive is the minimum we support (1.25.8),
+          # and scanning with that exact patch release reports 19 reachable
+          # advisories -- 14 of them standard library holes that Go itself fixed
+          # in 1.25.9 through 1.25.12. Scanning with the newest stable toolchain,
+          # which is also what the release build uses, reports 4. So a standard
+          # library finding here means "no patched Go exists yet", not "we
+          # pinned an old Go", and it is fixed by a toolchain, never by the
+          # baseline file.
+          go-version: stable
+          check-latest: true
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
+
+      - name: Scan
+        run: .github/scripts/govulncheck.sh
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: govulncheck-report
+          path: govulncheck.json
+          retention-days: 14
+          if-no-files-found: warn
