@@ -154,7 +154,16 @@ migrate one file at a time.</p>
 
 <h2>Install</h2>
 
-<pre><code>go install github.com/semx/helmtide/cmd/helmtide@latest</code></pre>
+<p>Binaries, <code>.deb</code>, <code>.rpm</code> and <code>.apk</code> for linux and
+macOS on amd64 and arm64 are attached to every
+<a href="https://github.com/semx/helmtide/releases">release</a>, with
+<code>checksums.txt</code> alongside them.</p>
+
+<pre><code># container
+docker run --rm ghcr.io/semx/helmtide:latest version
+
+# from source
+go install github.com/semx/helmtide/cmd/helmtide@latest</code></pre>
 
 <h2>Usage</h2>
 

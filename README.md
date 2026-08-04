@@ -72,7 +72,15 @@ migrate one file at a time.
 
 ## Install
 
+Binaries, `.deb`, `.rpm` and `.apk` for linux and macOS on amd64 and arm64 are
+attached to every [release](https://github.com/semx/helmtide/releases), with
+`checksums.txt` alongside them.
+
 ```console
+# container
+docker run --rm ghcr.io/semx/helmtide:latest version
+
+# from source
 go install github.com/semx/helmtide/cmd/helmtide@latest
 ```
 
