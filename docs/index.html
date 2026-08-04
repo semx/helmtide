@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>helmtide — a maintained fork of helmwave</title>
+<meta name="description" content="helm3-native release management. A maintained fork of helmwave: dependencies current, a test suite that cannot reach your cluster.">
+<style>
+  :root {
+    --bg: #fbfcfd; --fg: #1b1f24; --muted: #5b6570; --line: #e3e8ee;
+    --accent: #0b6bcb; --code-bg: #f2f5f8; --warn-bg: #fff8e6; --warn-line: #e8c96a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1116; --fg: #e6edf3; --muted: #98a5b3; --line: #232b35;
+      --accent: #6cb2ff; --code-bg: #161b22; --warn-bg: #1e1a0e; --warn-line: #5c4b1a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 22px 80px; }
+  header { padding: 64px 0 34px; border-bottom: 1px solid var(--line); }
+  h1 { font-size: 2.6rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .tag { color: var(--muted); font-size: 1.12rem; margin: 0 0 22px; }
+  .links a {
+    display: inline-block; margin: 0 10px 8px 0; padding: 7px 15px;
+    border: 1px solid var(--line); border-radius: 7px; text-decoration: none;
+    color: var(--fg); font-size: 0.93rem;
+  }
+  .links a:hover { border-color: var(--accent); color: var(--accent); }
+  .links a.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .links a.primary:hover { opacity: 0.9; color: #fff; }
+  h2 { font-size: 1.42rem; margin: 46px 0 12px; letter-spacing: -0.01em; }
+  h3 { font-size: 1.06rem; margin: 28px 0 8px; }
+  p, li { color: var(--fg); }
+  a { color: var(--accent); }
+  code {
+    background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+    font: 0.88em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  pre {
+    background: var(--code-bg); padding: 15px 17px; border-radius: 8px;
+    overflow-x: auto; border: 1px solid var(--line);
+  }
+  pre code { background: none; padding: 0; font-size: 0.86rem; line-height: 1.6; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.94rem; display: block; overflow-x: auto; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; color: var(--muted); font-size: 0.83rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .note {
+    background: var(--warn-bg); border: 1px solid var(--warn-line);
+    border-radius: 8px; padding: 15px 18px; margin: 22px 0; font-size: 0.95rem;
+  }
+  .note strong { display: block; margin-bottom: 4px; }
+  footer {
+    margin-top: 60px; padding-top: 22px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 0.89rem;
+  }
+  .num { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>helmtide</h1>
+  <p class="tag">helm-native release management for a whole set of releases, from one file.<br>A maintained fork of <a href="https://github.com/helmwave/helmwave">helmwave</a>.</p>
+  <div class="links">
+    <a class="primary" href="https://github.com/semx/helmtide">GitHub</a>
+    <a href="https://github.com/semx/helmtide#install">Install</a>
+    <a href="https://github.com/semx/helmtide/issues">Issues</a>
+    <a href="https://github.com/semx/helmtide/blob/main/ATTRIBUTION.md">Attribution</a>
+  </div>
+</header>
+
+<h2>What this is</h2>
+
+<p>helmwave deploys a whole set of Helm releases from one file: a planfile you can
+review before applying, a dependency graph instead of a wall of <code>helm upgrade</code>
+calls, live resource tracking through <a href="https://github.com/werf/kubedog">kubedog</a>,
+and helm linked in as a library rather than shelled out to. The design is good.</p>
+
+<p>It stopped receiving releases in December 2025, with its own release pull request
+left open and contributions unreviewed since. helmtide picks it up from there.</p>
+
+<div class="note">
+  <strong>This is a fork, not a replacement.</strong>
+  The design and almost all of the code belong to
+  <a href="https://github.com/zhilyaev">Dmitriy Zhilyaev</a> and the helmwave
+  contributors, under MIT. helmtide is not endorsed by or affiliated with them —
+  please do not send them helmtide bugs. If upstream maintenance resumes, the
+  changes here are offered back.
+</div>
+
+<h2>What is different</h2>
+
+<h3>Dependencies are current</h3>
+
+<p><code>govulncheck</code> reported <span class="num">33</span> vulnerabilities that the
+code actually reaches — among them helm 3.18.4 (panic on malformed YAML, memory
+exhaustion through a crafted JSON schema), go-getter 1.7.8 (symlink attacks,
+reached from <code>downloadRemoteSrc</code>) and go-git 5.13.0 (credentials forwarded
+across a redirect to another host).</p>
+
+<p>That is down to <span class="num">4</span>, each with no upstream fix yet, each
+written down with the reason it is still there. CI fails on a new one rather than
+on the ones nobody can fix.</p>
+
+<h3>The test suite cannot reach your cluster</h3>
+
+<p>Running the suite used to send helm dry-runs at whatever <code>~/.kube/config</code>
+pointed to. On the machine this fork was started on that was a production EKS
+endpoint, and it only failed because the credentials had expired.</p>
+
+<p>Importing the test helpers now pins <code>KUBECONFIG</code> to a kubeconfig that goes
+nowhere, and the tests that genuinely need an API server skip with a reason
+instead of failing with <em>cluster unreachable</em>. <code>go test ./...</code> is green on a
+laptop with no cluster and no credentials.</p>
+
+<h3>Community fixes that were waiting upstream</h3>
+
+<p>Reviewed, ported and credited to their authors — a duplicate <code>pre_build</code> hook
+invocation, and <code>offline_kube_version</code> still requiring a live cluster.</p>
+
+<h2>Drop-in</h2>
+
+<p>An existing helmwave setup runs unchanged.</p>
+
+<table>
+  <thead><tr><th>you have</th><th>helmtide</th></tr></thead>
+  <tbody>
+    <tr><td><code>helmwave.yml</code></td><td>used as-is when there is no <code>helmtide.yml</code></td></tr>
+    <tr><td><code>helmwave.yml.tpl</code></td><td>same</td></tr>
+    <tr><td><code>HELMWAVE_*</code> variables</td><td>still read; <code>HELMTIDE_*</code> wins when both are set</td></tr>
+  </tbody>
+</table>
+
+<p>So <code>helmtide build</code> works in a repository written for helmwave, and you can
+migrate one file at a time.</p>
+
+<h2>Install</h2>
+
+<pre><code>go install github.com/semx/helmtide/cmd/helmtide@latest</code></pre>
+
+<h2>Usage</h2>
+
+<pre><code>helmtide build      # render the plan
+helmtide up         # apply it</code></pre>
+
+<p>The <a href="https://docs.helmwave.app">helmwave documentation</a> still describes the
+configuration format accurately. Where helmtide diverges it is written down in
+the <a href="https://github.com/semx/helmtide#readme">README</a>.</p>
+
+<h2>Reporting a vulnerability</h2>
+
+<p>Send it to <a href="mailto:securityreport@sannikov.dev">securityreport@sannikov.dev</a>
+or <a href="https://t.me/sannikovdev">@sannikovdev</a> rather than opening a public
+issue. Bugs in helmwave itself belong to
+<a href="https://github.com/helmwave/helmwave/blob/main/SECURITY.md">their policy</a>,
+not to this address.</p>
+
+<footer>
+  MIT, inherited from helmwave — the original copyright notice is kept alongside ours.<br>
+  Not affiliated with the helmwave project.
+</footer>
+
+</div>
+</body>
+</html>
