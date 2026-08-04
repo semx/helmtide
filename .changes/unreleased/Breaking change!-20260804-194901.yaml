@@ -1,0 +1,6 @@
+kind: Breaking change!
+body: 'feat: drop `recreate` from a release, helm v4 removed the option it set'
+time: 2026-08-04T19:49:01.000000000+04:00
+custom:
+    Author: semx
+    Issue: ""

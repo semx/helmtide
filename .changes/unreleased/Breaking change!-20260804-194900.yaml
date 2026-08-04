@@ -1,0 +1,6 @@
+kind: Breaking change!
+body: 'feat: build on helm v4 instead of helm v3, which reaches EOL in November 2026'
+time: 2026-08-04T19:49:00.000000000+04:00
+custom:
+    Author: semx
+    Issue: ""
