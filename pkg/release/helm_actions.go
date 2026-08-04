@@ -68,13 +68,20 @@ func (rel *config) newInstall() *action.Install {
 	}
 
 	if client.DryRun {
-		client.DryRunOption = "server"
 		client.Replace = true
-	}
 
-	if client.DryRun && nil != rel.OfflineKubeVersion() {
-		client.ClientOnly = true
-		client.KubeVersion = rel.OfflineKubeVersion()
+		// DryRunOption is what helm actually looks at, and "server" makes it render
+		// through a live REST client. That is what we want for a normal build, so
+		// `lookup` in a chart sees the cluster. With offline_kube_version the user
+		// asked for the opposite, so say "client" — otherwise helm builds a REST
+		// config and renders against the cluster despite ClientOnly.
+		if rel.OfflineKubeVersion() != nil {
+			client.DryRunOption = "client"
+			client.ClientOnly = true
+			client.KubeVersion = rel.OfflineKubeVersion()
+		} else {
+			client.DryRunOption = "server"
+		}
 	}
 
 	return client

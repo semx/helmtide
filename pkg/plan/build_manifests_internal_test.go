@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/semx/helmtide/pkg/hooks"
 	"github.com/semx/helmtide/pkg/release/uniqname"
 	"github.com/semx/helmtide/tests"
 	"github.com/stretchr/testify/suite"
@@ -41,6 +42,8 @@ func (ts *BuildManifestsTestSuite) TestMultipleReleases() {
 
 	rel1 := NewMockReleaseConfig(ts.T())
 	u1, _ := uniqname.NewFromString("redis1@defaultblabla")
+	rel1.On("Lifecycle").Return(hooks.Lifecycle{})
+	rel1.On("DownloadChart").Return(nil)
 	rel1.On("ChartDepsUpd").Return(nil)
 	rel1.On("DryRun").Return()
 	rel1.On("Sync").Return(&helmRelease.Release{}, nil)
@@ -49,6 +52,8 @@ func (ts *BuildManifestsTestSuite) TestMultipleReleases() {
 
 	rel2 := NewMockReleaseConfig(ts.T())
 	u2, _ := uniqname.NewFromString("redis2@defaultblabla")
+	rel2.On("Lifecycle").Return(hooks.Lifecycle{})
+	rel2.On("DownloadChart").Return(nil)
 	rel2.On("ChartDepsUpd").Return(nil)
 	rel2.On("DryRun").Return()
 	rel2.On("Sync").Return(&helmRelease.Release{}, nil)
@@ -76,6 +81,8 @@ func (ts *BuildManifestsTestSuite) TestChartDepsUpdError() {
 	rel := NewMockReleaseConfig(ts.T())
 	uniq, _ := uniqname.NewFromString("redis1@defaultblabla")
 	errExpected := errors.New(ts.T().Name())
+	rel.On("Lifecycle").Return(hooks.Lifecycle{})
+	rel.On("DownloadChart").Return(nil)
 	rel.On("ChartDepsUpd").Return(errExpected)
 	rel.On("DryRun").Return()
 	rel.On("Sync").Return(&helmRelease.Release{}, nil)
@@ -99,6 +106,8 @@ func (ts *BuildManifestsTestSuite) TestSyncError() {
 
 	rel := NewMockReleaseConfig(ts.T())
 	errExpected := errors.New(ts.T().Name())
+	rel.On("Lifecycle").Return(hooks.Lifecycle{})
+	rel.On("DownloadChart").Return(nil)
 	rel.On("ChartDepsUpd").Return(nil)
 	rel.On("DryRun").Return()
 	rel.On("Sync").Return(&helmRelease.Release{}, errExpected)
@@ -117,6 +126,8 @@ func (ts *BuildManifestsTestSuite) TestDisabledHooks() {
 
 	rel := NewMockReleaseConfig(ts.T())
 	uniq, _ := uniqname.NewFromString("redis1@defaultblabla")
+	rel.On("Lifecycle").Return(hooks.Lifecycle{})
+	rel.On("DownloadChart").Return(nil)
 	rel.On("ChartDepsUpd").Return(nil)
 	rel.On("DryRun").Return()
 	rel.On("Sync").Return(&helmRelease.Release{
@@ -143,6 +154,8 @@ func (ts *BuildManifestsTestSuite) TestEnabledHooks() {
 
 	rel := NewMockReleaseConfig(ts.T())
 	uniq, _ := uniqname.NewFromString("redis1@defaultblabla")
+	rel.On("Lifecycle").Return(hooks.Lifecycle{})
+	rel.On("DownloadChart").Return(nil)
 	rel.On("ChartDepsUpd").Return(nil)
 	rel.On("DryRun").Return()
 	rel.On("Sync").Return(&helmRelease.Release{

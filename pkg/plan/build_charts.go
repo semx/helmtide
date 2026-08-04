@@ -1,26 +1,20 @@
 package plan
 
 import (
-	"github.com/semx/helmtide/pkg/parallel"
 	"github.com/semx/helmtide/pkg/release"
-	log "github.com/sirupsen/logrus"
 )
 
-func (p *Plan) buildCharts() error {
-	log.Info("🔨 Building charts...")
+// buildReleaseChart downloads the chart of a single release into the plan
+// tmpdir.
+//
+// It is called from buildReleaseManifest rather than as a plan-wide step,
+// because it has to run after that release's pre_build hook: a hook is allowed
+// to produce the chart itself, e.g. by cloning a repository that only ships a
+// chart directory and is not a chart repository.
+//
+//nolint:wrapcheck // the release logs enough context of its own
+func (p *Plan) buildReleaseChart(rel release.Config) error {
+	rel.Logger().Info("🔨 Building chart...")
 
-	wg := parallel.NewWaitGroup()
-	wg.Add(len(p.body.Releases))
-
-	for _, rel := range p.body.Releases {
-		go func(wg *parallel.WaitGroup, rel release.Config) {
-			defer wg.Done()
-			err := rel.DownloadChart(p.tmpDir)
-			if err != nil {
-				wg.ErrChan() <- err
-			}
-		}(wg, rel)
-	}
-
-	return wg.Wait()
+	return rel.DownloadChart(p.tmpDir)
 }
