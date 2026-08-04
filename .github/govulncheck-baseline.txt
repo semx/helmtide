@@ -15,32 +15,16 @@
 # 14 stdlib advisories Go fixed in 1.25.9 - 1.25.12. That is the reason the job
 # does not use go-version-file.)
 #
-# Last reviewed: 2026-08-04, govulncheck v1.6.0, Go 1.26.5, vuln db 2026-07-27.
-# Reachable then: exactly the four below.
-
-# The golang.org/x/crypto/openpgp package is unmaintained and unsafe by design.
-# The advisory covers every version that has ever existed and has no fixed one,
-# so there is nothing to upgrade to. We do not import it: helm does, to check
-# chart provenance (LocateChart) and signed repository indexes
-# (DownloadIndexFile). It goes away when helm stops using x/crypto/openpgp.
-GO-2026-5932
-
-# Three containerd CRI checkpoint/restore holes: symlink following in the log
-# path (CVE-2026-53489), image tag poisoning on checkpoint import
-# (CVE-2026-50195) and CDI annotation smuggling on restore (CVE-2026-53492).
+# Last reviewed: 2026-08-04, govulncheck v1.6.0, vuln db 2026-07-27, right
+# after the move to helm.sh/helm/v4. Reachable then: nothing.
 #
-# All three are fixed only in the github.com/containerd/containerd/v2 module
-# (2.1.9, 2.2.5); for the v1 module every advisory is "introduced at 0" with no
-# fix event, i.e. the 1.x line is not getting one. We are on v1.7.33 as an
-# indirect dependency of helm.sh/helm/v3/pkg/registry, so it moves when helm
-# moves to containerd v2, and not before.
+# The file is deliberately empty of ids. helm v4 took the last four with it:
 #
-# The advisories name no vulnerable packages for the v1 module, which is why
-# every trace govulncheck offers is package initialisation (release.init ->
-# registry.init -> images.init and friends) rather than a call into the CRI
-# checkpoint code. helmtide has no way to reach that code: it uses containerd's
-# remotes/images packages to pull charts from an OCI registry and never speaks
-# to a containerd daemon, let alone checkpoints a container.
-GO-2026-5622
-GO-2026-5338
-GO-2026-5064
+#   * GO-2026-5932, golang.org/x/crypto/openpgp -- helm 3 used it for chart
+#     provenance and signed repository indexes. helm 4 does not.
+#   * GO-2026-5622, GO-2026-5338, GO-2026-5064, containerd v1 CRI
+#     checkpoint/restore -- containerd came in under helm 3's OCI registry
+#     client and is no longer in the module graph at all.
+#
+# Whatever lands here next needs its own paragraph saying why it cannot be
+# fixed and what takes it out.

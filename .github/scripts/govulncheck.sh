@@ -3,11 +3,11 @@
 # Runs govulncheck and fails on any vulnerability that helmtide's own code can
 # reach and that is not written down in .github/govulncheck-baseline.txt.
 #
-# `govulncheck ./...` on its own exits non-zero here and always will: five
-# advisories are reachable and four of them have no fixed version to move to
-# (see the baseline file, which says why for each one). A job that is red every
-# single run teaches people to ignore it, and `|| true` would make it green by
-# lying. So the check is "nothing new", not "nothing at all":
+# The baseline is empty as of the move to helm v4, but the gate stays: when an
+# advisory turns up with no fixed version to move to, `govulncheck ./...` exits
+# non-zero on every run, and a job that is red every single run teaches people
+# to ignore it. `|| true` would make it green by lying. So the check is
+# "nothing new", not "nothing at all":
 #
 #   * a reachable advisory that is not in the baseline fails the job -- that is
 #     the regression we care about;
