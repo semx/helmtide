@@ -6,14 +6,20 @@
 !.vscode/settings.json
 dist/
 
+/helmtide
+/helmtide.yml.tpl
+helmtide.yml
+.helmtide
 /helmwave
 /helmwave.yml.tpl
 helmwave.yml
 .helmwave
 schema
+schema.json
 gitops
 
 tests.cov
+govulncheck.json
 
 ### Linux template
 *~

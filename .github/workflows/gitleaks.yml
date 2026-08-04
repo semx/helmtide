@@ -1,9 +1,14 @@
 name: GitLeaks
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
-    branches: [ "main", "release/*" ]
+    branches: [ main ]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   gitleaks:
@@ -13,10 +18,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      # GITLEAKS_LICENSE is dropped: it is only required for repositories owned
+      # by an organisation, and referencing a secret we do not have would just
+      # pass an empty string.
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          # Only required for Organizations, not personal accounts.
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-          
- 

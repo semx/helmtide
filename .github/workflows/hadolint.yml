@@ -10,7 +10,7 @@ name: Hadolint
 
 on:
   pull_request:
-    branches: [ "main", "release/*" ]
+    branches: [ main ]
     paths: [ Dockerfile ]
 
   schedule:

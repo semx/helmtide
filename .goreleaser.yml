@@ -8,22 +8,11 @@ before:
 # Builds
 ###
 
-nix:
-  - url_template: "https://github.com/semx/helmtide/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    name: helmtide
-    ids: [ helmtide ]
-
-    homepage: https://helmtide.dev/
-    description: "helmtide is a maintained fork of helmwave: release management for helm"
-    license: "mit"
-
-    # Repository to push the generated files to.
-    repository:
-      owner: semx
-      name: NUR
-      branch: main
-
-
+# The upstream release also pushed a Nix derivation to its NUR repository, a
+# Homebrew formula to its tap, images to its Docker Hub account and an
+# announcement to its Telegram channel. All four are somebody else's account, so
+# they are gone rather than left to fail on a missing token. What is left needs
+# nothing but the token GitHub gives the release job.
 
 builds:
   - &bin
@@ -60,28 +49,28 @@ builds:
 ###
 archives:
   - &archive
-    builds: [ helmtide ]
+    ids: [ helmtide ]
     name_template: >-2
       {{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
       {{- with .Arm }}v{{ . }}{{ end -}}
       {{- with .Mips }}_{{ . }}{{ end -}}
       {{- if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end -}}
     id: helmtide
-    format: tar.gz
+    formats: [ tar.gz ]
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [ zip ]
 
   - <<: *archive
     id: gitops
-    builds: [ gitops ]
+    ids: [ gitops ]
 
 
 nfpms:
   - &nfpms
     id: helmtide
     maintainer: community@helmtide.dev
-    builds: [ helmtide ]
+    ids: [ helmtide ]
     formats:
       - apk
       - deb
@@ -90,7 +79,7 @@ nfpms:
   - <<: *nfpms
     id: gitops
     package_name: gitops
-    builds: [ gitops ]
+    ids: [ gitops ]
 
 
 checksum:
@@ -102,10 +91,8 @@ dockers:
     image_templates:
       - ghcr.io/semx/helmtide:{{ .Version }}-scratch-amd64
       - ghcr.io/semx/helmtide:scratch-amd64
-      - diamon/helmtide:{{ .Version }}-scratch-amd64
-      - diamon/helmtide:scratch-amd64
     build_flag_templates:
-      - "--label=org.opencontainers.image.description=helmtide is a maintained fork of helmwave: release management for helm"
+      - "--label=org.opencontainers.image.description=helmtide, a maintained fork of helmwave"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
@@ -126,10 +113,8 @@ dockers:
     image_templates:
       - ghcr.io/semx/helmtide:{{ .Version }}-scratch-arm64v8
       - ghcr.io/semx/helmtide:scratch-arm64v8
-      - diamon/helmtide:{{ .Version }}-scratch-arm64v8
-      - diamon/helmtide:scratch-arm64v8
     build_flag_templates:
-      - "--label=org.opencontainers.image.description=helmtide is a maintained fork of helmwave: release management for helm"
+      - "--label=org.opencontainers.image.description=helmtide, a maintained fork of helmwave"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
@@ -149,10 +134,8 @@ dockers:
     image_templates:
       - ghcr.io/semx/helmtide:{{ .Version }}-amd64
       - ghcr.io/semx/helmtide:latest-amd64
-      - diamon/helmtide:{{ .Version }}-amd64
-      - diamon/helmtide:latest-amd64
     build_flag_templates:
-      - "--label=org.opencontainers.image.description=helmtide is a maintained fork of helmwave: release management for helm"
+      - "--label=org.opencontainers.image.description=helmtide, a maintained fork of helmwave"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
@@ -173,10 +156,8 @@ dockers:
     image_templates:
       - ghcr.io/semx/helmtide:{{ .Version }}-arm64v8
       - ghcr.io/semx/helmtide:latest-arm64v8
-      - diamon/helmtide:{{ .Version }}-arm64v8
-      - diamon/helmtide:latest-arm64v8
     build_flag_templates:
-      - "--label=org.opencontainers.image.description=helmtide is a maintained fork of helmwave: release management for helm"
+      - "--label=org.opencontainers.image.description=helmtide, a maintained fork of helmwave"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
@@ -196,8 +177,8 @@ dockers:
   # gitops
   - dockerfile: Dockerfile
     image_templates:
-      - ghcr.io/helmtide/gitops:{{ .Version }}-scratch-amd64
-      - ghcr.io/helmtide/gitops:scratch-amd64
+      - ghcr.io/semx/helmtide-gitops:{{ .Version }}-scratch-amd64
+      - ghcr.io/semx/helmtide-gitops:scratch-amd64
     build_flag_templates:
       - "--label=org.opencontainers.image.description=GitOps plugin for helmtide"
       - "--label=org.opencontainers.image.created={{ .Date }}"
@@ -206,7 +187,7 @@ dockers:
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.licenses=MIT"
       - "--label=org.opencontainers.image.source=https://github.com/semx/helmtide"
-      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/gitops"
+      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/helmtide-gitops"
       - "--label=org.opencontainers.image.documentation=https://helmtide.dev/"
 
       - "--platform=linux/amd64"
@@ -219,8 +200,8 @@ dockers:
     use: buildx
   - dockerfile: Dockerfile
     image_templates:
-      - ghcr.io/helmtide/gitops:{{ .Version }}-scratch-arm64v8
-      - ghcr.io/helmtide/gitops:scratch-arm64v8
+      - ghcr.io/semx/helmtide-gitops:{{ .Version }}-scratch-arm64v8
+      - ghcr.io/semx/helmtide-gitops:scratch-arm64v8
     build_flag_templates:
       - "--label=org.opencontainers.image.description=GitOps plugin for helmtide"
       - "--label=org.opencontainers.image.created={{ .Date }}"
@@ -229,7 +210,7 @@ dockers:
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.licenses=MIT"
       - "--label=org.opencontainers.image.source=https://github.com/semx/helmtide"
-      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/gitops"
+      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/helmtide-gitops"
       - "--label=org.opencontainers.image.documentation=https://helmtide.dev/"
 
       - "--platform=linux/arm64/v8"
@@ -241,8 +222,8 @@ dockers:
     use: buildx
   - dockerfile: Dockerfile
     image_templates:
-      - ghcr.io/helmtide/gitops:{{ .Version }}-amd64
-      - ghcr.io/helmtide/gitops:latest-amd64
+      - ghcr.io/semx/helmtide-gitops:{{ .Version }}-amd64
+      - ghcr.io/semx/helmtide-gitops:latest-amd64
     build_flag_templates:
       - "--label=org.opencontainers.image.description=GitOps plugin for helmtide"
       - "--label=org.opencontainers.image.created={{ .Date }}"
@@ -251,7 +232,7 @@ dockers:
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.licenses=MIT"
       - "--label=org.opencontainers.image.source=https://github.com/semx/helmtide"
-      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/gitops"
+      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/helmtide-gitops"
       - "--label=org.opencontainers.image.documentation=https://helmtide.dev/"
 
       - "--platform=linux/amd64"
@@ -264,8 +245,8 @@ dockers:
     use: buildx
   - dockerfile: Dockerfile
     image_templates:
-      - ghcr.io/helmtide/gitops:{{ .Version }}-arm64v8
-      - ghcr.io/helmtide/gitops:latest-arm64v8
+      - ghcr.io/semx/helmtide-gitops:{{ .Version }}-arm64v8
+      - ghcr.io/semx/helmtide-gitops:latest-arm64v8
     build_flag_templates:
       - "--label=org.opencontainers.image.description=GitOps plugin for helmtide"
       - "--label=org.opencontainers.image.created={{ .Date }}"
@@ -274,7 +255,7 @@ dockers:
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.licenses=MIT"
       - "--label=org.opencontainers.image.source=https://github.com/semx/helmtide"
-      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/gitops"
+      - "--label=org.opencontainers.image.url=https://github.com/semx/helmtide/pkgs/container/helmtide-gitops"
       - "--label=org.opencontainers.image.documentation=https://helmtide.dev/"
 
       - "--platform=linux/arm64/v8"
@@ -305,40 +286,22 @@ docker_manifests:
       - ghcr.io/semx/helmtide:latest-arm64v8
 
   # gitops: GitHub Container Registry
-  - name_template: ghcr.io/helmtide/gitops:{{ .Version }}-scratch
+  - name_template: ghcr.io/semx/helmtide-gitops:{{ .Version }}-scratch
     image_templates:
-      - ghcr.io/helmtide/gitops:{{ .Version }}-scratch-amd64
-      - ghcr.io/helmtide/gitops:{{ .Version }}-scratch-arm64v8
-  - name_template: ghcr.io/helmtide/gitops:scratch
+      - ghcr.io/semx/helmtide-gitops:{{ .Version }}-scratch-amd64
+      - ghcr.io/semx/helmtide-gitops:{{ .Version }}-scratch-arm64v8
+  - name_template: ghcr.io/semx/helmtide-gitops:scratch
     image_templates:
-      - ghcr.io/helmtide/gitops:scratch-amd64
-      - ghcr.io/helmtide/gitops:scratch-arm64v8
-  - name_template: ghcr.io/helmtide/gitops:{{ .Version }}
+      - ghcr.io/semx/helmtide-gitops:scratch-amd64
+      - ghcr.io/semx/helmtide-gitops:scratch-arm64v8
+  - name_template: ghcr.io/semx/helmtide-gitops:{{ .Version }}
     image_templates:
-      - ghcr.io/helmtide/gitops:{{ .Version }}-amd64
-      - ghcr.io/helmtide/gitops:{{ .Version }}-arm64v8
-  - name_template: ghcr.io/helmtide/gitops:latest
+      - ghcr.io/semx/helmtide-gitops:{{ .Version }}-amd64
+      - ghcr.io/semx/helmtide-gitops:{{ .Version }}-arm64v8
+  - name_template: ghcr.io/semx/helmtide-gitops:latest
     image_templates:
-      - ghcr.io/helmtide/gitops:latest-amd64
-      - ghcr.io/helmtide/gitops:latest-arm64v8
-
-  # helmtide: DockerHub
-  - name_template: diamon/helmtide:{{ .Version }}
-    image_templates:
-      - diamon/helmtide:{{ .Version }}-amd64
-      - diamon/helmtide:{{ .Version }}-arm64v8
-  - name_template: diamon/helmtide:latest
-    image_templates:
-      - diamon/helmtide:latest-amd64
-      - diamon/helmtide:latest-arm64v8
-  - name_template: diamon/helmtide:{{ .Version }}-scratch
-    image_templates:
-      - diamon/helmtide:{{ .Version }}-scratch-amd64
-      - diamon/helmtide:{{ .Version }}-scratch-arm64v8
-  - name_template: diamon/helmtide:scratch
-    image_templates:
-      - diamon/helmtide:scratch-amd64
-      - diamon/helmtide:scratch-arm64v8
+      - ghcr.io/semx/helmtide-gitops:latest-amd64
+      - ghcr.io/semx/helmtide-gitops:latest-arm64v8
 
 
 ###
@@ -389,43 +352,9 @@ release:
   #  draft: true
   prerelease: auto
 
-brews:
-  - ids: [ helmtide ]
-    repository:
-      owner: helmtide
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-      pull_request:
-        enabled: false
-    goamd64: v1
-    homepage: https://helmtide.dev/
-    description: "helmtide is a maintained fork of helmwave: release management for helm"
-    license: MIT
-    directory: Formula
-    skip_upload: auto
-
-    custom_block: |
-      head "https://github.com/semx/helmtide.git", branch: "main"
-    test: |
-      assert_match version.to_s, shell_output("#{bin/"helmtide"} --version")
-    extra_install: |
-      generate_completions_from_executable(bin/"helmtide", "completion", shells: [:bash, :zsh])
-
 milestones:
   - close: true
     fail_on_error: false
     name_template: "{{ .Tag }}"
 
 report_sizes: true
-
-###
-# Announces
-###
-
-announce:
-  telegram:
-    enabled: true
-    chat_id: -1001484486010
-    message_template: |
-      helmtide *{{ replace .Tag "." "\\." }}* is ready\!
-      See more: https://github\.com/semx/helmtide/releases/tag/{{ replace .Tag "." "\\." }}

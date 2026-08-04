@@ -1,14 +1,25 @@
 name: Go lint
 
 on:
-  pull_request:
-    branches: [ "main", "release/*" ]
+  push:
+    branches: [ main ]
     paths:
       - "**.go"
       - go.mod
       - go.sum
       - .github/workflows/go-lint.yml
       - .golangci.yml
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "**.go"
+      - go.mod
+      - go.sum
+      - .github/workflows/go-lint.yml
+      - .golangci.yml
+
+permissions:
+  contents: read
 
 jobs:
   go-lint:
@@ -23,4 +34,9 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
+          # Pinned, and tied to the toolchain in go.mod: v2.4 is built with Go
+          # 1.25 and its type checker panics outright ("file requires newer Go
+          # version go1.26") against a 1.26 standard library. Raising the go
+          # directive means raising this pin too, and v2.12 switches on linters
+          # that report ~37 findings nobody has triaged yet.
           version: v2.4

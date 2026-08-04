@@ -1,23 +1,50 @@
 name: Yamllint
 
 on:
+  push:
+    branches: [ main ]
+    paths:
+      - "**.yaml"
+      - "**.yml"
   pull_request:
-    branches: [ "main", "release/*" ]
+    branches: [ main ]
     paths:
       - "**.yaml"
       - "**.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
+  # yamllint straight from pip rather than through karancode/yamllint-github-action@master:
+  # same check, one less unpinned third party in the chain, and it is the command
+  # you can run yourself.
   yamllint:
-    name: yamllint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
-      - uses: karancode/yamllint-github-action@master
-        with:
-          yamllint_config_filepath: .yamllint.yaml
-          yamllint_comment: true
+      - name: Install yamllint
+        run: pipx install yamllint==1.38.0
+
+      - name: Run yamllint
+        run: yamllint --strict -c .yamllint.yaml .
+
+  # .yamllint.yaml deliberately ignores .github, so nothing was checking the
+  # workflows themselves. actionlint parses them, type-checks the ${{ }}
+  # expressions and shellchecks every run block.
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install actionlint
         env:
-          GITHUB_ACCESS_TOKEN: ${{ github.token }}
+          VERSION: 1.7.12
+        run: |
+          curl -fsSL "https://github.com/rhysd/actionlint/releases/download/v${VERSION}/actionlint_${VERSION}_linux_amd64.tar.gz" |
+            tar -xz -C /usr/local/bin actionlint
+
+      - name: Run actionlint
+        run: actionlint -color

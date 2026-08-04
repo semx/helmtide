@@ -1,4 +1,0 @@
-# TODO: forget about github actions and move to gitlab-ci
-
-job1:
-  script: echo 123

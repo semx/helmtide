@@ -14,8 +14,8 @@ import (
 func TestDefaultBody(t *testing.T) {
 	for _, tt := range []struct {
 		name    string
-		present []string
 		want    string
+		present []string
 	}{
 		{
 			name:    "nothing present falls back to our own name",
@@ -44,10 +44,7 @@ func TestDefaultBody(t *testing.T) {
 				require.NoError(t, os.WriteFile(filepath.Join(dir, f), []byte("project: test\n"), 0o600))
 			}
 
-			wd, err := os.Getwd()
-			require.NoError(t, err)
-			require.NoError(t, os.Chdir(dir))
-			defer func() { require.NoError(t, os.Chdir(wd)) }()
+			t.Chdir(dir)
 
 			require.Equal(t, tt.want, plan.DefaultBody())
 		})
@@ -58,13 +55,13 @@ func TestDefaultBody(t *testing.T) {
 func TestDefaultTpl(t *testing.T) {
 	for _, tt := range []struct {
 		name    string
-		present []string
 		want    string
+		present []string
 	}{
-		{"nothing present", nil, plan.Tpl},
-		{"only ours", []string{plan.Tpl}, plan.Tpl},
-		{"only the inherited name", []string{plan.LegacyTpl}, plan.LegacyTpl},
-		{"both, ours wins", []string{plan.Tpl, plan.LegacyTpl}, plan.Tpl},
+		{"nothing present", plan.Tpl, nil},
+		{"only ours", plan.Tpl, []string{plan.Tpl}},
+		{"only the inherited name", plan.LegacyTpl, []string{plan.LegacyTpl}},
+		{"both, ours wins", plan.Tpl, []string{plan.Tpl, plan.LegacyTpl}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
@@ -72,10 +69,7 @@ func TestDefaultTpl(t *testing.T) {
 				require.NoError(t, os.WriteFile(filepath.Join(dir, f), []byte("project: test\n"), 0o600))
 			}
 
-			wd, err := os.Getwd()
-			require.NoError(t, err)
-			require.NoError(t, os.Chdir(dir))
-			defer func() { require.NoError(t, os.Chdir(wd)) }()
+			t.Chdir(dir)
 
 			require.Equal(t, tt.want, plan.DefaultTpl())
 		})

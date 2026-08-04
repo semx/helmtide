@@ -1,8 +1,15 @@
 name: Go tests
 
 on:
+  push:
+    branches: [ main ]
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - .github/workflows/go-tests.yml
   pull_request:
-    branches: [ "main", "release/*" ]
+    branches: [ main ]
     # You can't use yaml anchors here
     paths:
       - "**.go"
@@ -10,35 +17,38 @@ on:
       - "go.sum"
       - .github/workflows/go-tests.yml
 
+permissions:
+  contents: read
+
 jobs:
   go-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Create KinD cluster
-        uses: container-tools/kind-action@v2
-        with:
-          config: tests/kind-config.yaml
-          registry: false
 
       - uses: actions/setup-go@v6
         with:
+          # The declared minimum, so the suite is exercised against the version
+          # we promise to build with. The vulnerability scan and the release
+          # build deliberately use a newer toolchain instead.
           go-version-file: go.mod
 
       - name: Install go modules
         run: go mod download
 
-      - name: Run unit tests
-        run: go test -coverprofile=./tests.cov -v -covermode=atomic -timeout=20m --tags=integration ./...
+      # No cluster here on purpose. tests/helpers.go pins KUBECONFIG to a
+      # dead-end kubeconfig on import, and the tests that need an API server
+      # skip themselves unless HELMTIDE_TEST_CLUSTER is set. Those run in
+      # integration-tests.yml against KinD.
+      - name: Run tests
+        run: go test -coverprofile=tests.cov -covermode=atomic -timeout=20m ./...
 
-      - name: Run all tests
-        run: go test -coverprofile=./tests.cov -v -covermode=atomic -timeout=20m --tags=integration ./...
+      - name: Coverage
+        run: go tool cover -func=tests.cov | tail -n 1 | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - uses: codecov/codecov-action@v5
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
         with:
-          files: ./tests.cov
-          fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+          name: coverage
+          path: tests.cov
+          retention-days: 14
