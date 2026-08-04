@@ -1,46 +1,40 @@
 name: Container check
 
+# Scans the image we publish, so it only runs when there is one. The weekly
+# schedule upstream had is off until this fork has cut its first release --
+# a timer that fails every Saturday on "image not found" is not a security
+# control. Turn it back on then.
+#
+# Snyk is gone: it needs SNYK_TOKEN, which belongs to the upstream project.
 on:
   release:
     types: [ published ]
-  schedule:
-    - cron: "44 10 * * 6"
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   container-check:
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
+      contents: read
+      security-events: write # to upload the SARIF report
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Trivy
-        continue-on-error: true
         uses: aquasecurity/trivy-action@0.33.1
         with:
           image-ref: "ghcr.io/${{ github.repository }}:latest"
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "HIGH,CRITICAL"
+          # Findings belong in the Security tab; a failing scan step should mean
+          # the scan itself broke.
+          exit-code: "0"
 
-      - name: Upload Trivy scan results to GitHub Security tab
+      - name: Upload Trivy results to the Security tab
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: "trivy-results.sarif"
-
-      - name: Snyk
-        continue-on-error: true
-        uses: snyk/actions/docker@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          image: ghcr.io/${{ github.repository }}:latest
-          args: --file=Dockerfile --severity-threshold=high
-
-      - name: Upload Snyk result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: snyk.sarif

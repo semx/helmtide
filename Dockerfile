@@ -1,6 +1,10 @@
-ARG GOLANG_VERSION=1.23
+ARG GOLANG_VERSION=1.25
 ARG ALPINE_VERSION=3.21
-ARG PROJECT=helmwave
+# Names both ./cmd/${PROJECT} and the binary goreleaser leaves in the build
+# context. The rebrand left this as helmwave, so every image build -- and every
+# release, which builds four of them -- was looking for a directory and a file
+# that no longer exist. Overridden with --build-arg for the gitops image.
+ARG PROJECT=helmtide
 
 # Bulder
 FROM golang:${GOLANG_VERSION}-alpine${ALPINE_VERSION} AS builder

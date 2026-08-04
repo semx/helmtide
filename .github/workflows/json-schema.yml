@@ -1,46 +1,51 @@
 name: JSON Schema
 
-permissions:
-  contents: write
-  packages: write
-
+# Built from source instead of by running the published container: the schema
+# can then be regenerated for any commit, the binary name is not baked into the
+# workflow, and a release does not have to wait for its own image to exist.
 on:
   release:
     types: [ published ]
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "pkg/plan/**.go"
+      - "pkg/release/**.go"
+      - "pkg/repo/**.go"
+      - "cmd/schema/**"
+      - .github/workflows/json-schema.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  generate-schema:
+  json-schema:
     runs-on: ubuntu-latest
-    container:
-      # I hate gha, Because I can't pass variables to image tag with string manipulation.
-      image: ghcr.io/${{ github.repository }}:latest
+    permissions:
+      contents: write # to attach schema.json to the release
     steps:
-      - name: generate schema
-        run: helmwave schema > schema.json
+      - uses: actions/checkout@v6
 
-      - name: upload artifact
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Generate schema
+        run: go run ./cmd/schema schema > schema.json
+
+      - name: Check it parses
+        run: jq empty schema.json
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: schema.json
           path: schema.json
 
-  upload-schema:
-    runs-on: ubuntu-latest
-    needs:
-      - generate-schema
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: download artifact
-        uses: actions/download-artifact@v5
-        with:
-          name: schema.json
-
-      - name: upload to release
+      - name: Upload to release
+        if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload $TAG schema.json
-
+        run: gh release upload "$TAG" schema.json --clobber

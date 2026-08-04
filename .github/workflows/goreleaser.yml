@@ -1,16 +1,24 @@
 name: Goreleaser
 
+# Everything here runs on the token GitHub hands the job. The upstream release
+# also logged in to Docker Hub, signed the Homebrew tap and announced to a
+# Telegram channel, all with credentials that belong to the helmwave project --
+# those publishers are gone from .goreleaser.yml, so nothing here asks for a
+# secret we do not have.
 on:
   push:
     tags: [ "v*.*.*" ]
+
+permissions:
+  contents: read
 
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # to create release
-      issues: write # to close milestone
-      packages: write # to upload package
+      contents: write # to create the release
+      issues: write # to close the milestone
+      packages: write # to push to ghcr.io
     steps:
       - uses: actions/checkout@v6
         with:
@@ -30,25 +38,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       # https://github.com/orgs/community/discussions/25678#discussioncomment-5242449
       - name: Delete huge unnecessary tools folder
         run: rm -rf /opt/hostedtoolcache
 
-      - uses: wow-actions/use-app-token@v2
-        id: token
-        with:
-          app_id: ${{ secrets.GH_APP_ID }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-
       - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
+          # Not go.mod. go.mod declares the oldest Go we support; released
+          # binaries are built with the newest one, which is where the standard
+          # library fixes are. See .github/govulncheck-baseline.txt.
+          go-version: stable
+          check-latest: true
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
@@ -56,6 +56,4 @@ jobs:
           version: latest
           args: release --skip=validate --clean
         env:
-          GITHUB_TOKEN: ${{ steps.token.outputs.BOT_TOKEN }}
-          HOMEBREW_TAP_GITHUB_TOKEN: ${{ steps.token.outputs.BOT_TOKEN }}
-          TELEGRAM_TOKEN: ${{ secrets.BOT_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}

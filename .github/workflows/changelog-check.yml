@@ -2,12 +2,16 @@ name: Changelog check
 
 on:
   pull_request:
-    branches: [ "main", "release/*" ]
-
+    branches: [ main ]
 
 jobs:
   changelog-check:
     runs-on: ubuntu-latest
+    # Upstream's dependabot workflow wrote the changie entry for it, using a
+    # GitHub App this fork does not have. Rather than fail every dependency
+    # bump on a missing changelog, dependency PRs are exempt; changie batch
+    # picks the rest up at release time.
+    if: github.actor != 'dependabot[bot]'
     permissions:
       contents: read
     steps:

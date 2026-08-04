@@ -1,9 +1,11 @@
 name: CodeQL
 
-
+# Code scanning is free on public repositories. On a private one it needs GitHub
+# Advanced Security, and both this and the SARIF uploads in hadolint.yml and
+# container-check.yml will fail without it.
 on:
   pull_request:
-    branches: [ "main", "release/*" ]
+    branches: [ main ]
     paths:
       - '**.go'
   schedule:
