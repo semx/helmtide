@@ -23,9 +23,19 @@ reached from `downloadRemoteSrc`) and go-git 5.13.0 (credentials forwarded
 across a redirect to another host). That is down to 5, and each of those has no
 upstream fix yet or needs a newer Go toolchain.
 
-**Tests are meant to run on a laptop.** Parts of the upstream suite reach for
-the network and fail without saying why. Work in progress; see the tests
-section below.
+**The test suite cannot reach your cluster.** Running it used to send helm
+dry-runs at whatever `~/.kube/config` pointed to — on the machine this fork was
+started on, a production EKS endpoint, and it only failed because the
+credentials had expired. Importing the test helpers now pins `KUBECONFIG` to a
+kubeconfig that goes nowhere, and the twelve tests that genuinely need an API
+server skip with a reason instead of failing with "cluster unreachable".
+
+`go test ./...` is green on a laptop with no cluster and no credentials: 18
+packages, 0 failures. To run the cluster-dependent ones:
+
+```console
+HELMTIDE_TEST_CLUSTER=~/.kube/config-of-a-throwaway-cluster go test ./...
+```
 
 ## Drop-in
 
