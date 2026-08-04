@@ -14,7 +14,7 @@ import (
 func asRelease(r releaseiface.Releaser) (*release.Release, error) {
 	switch v := r.(type) {
 	case nil:
-		return nil, nil
+		return nil, ErrNilRelease
 	case *release.Release:
 		return v, nil
 	case release.Release:

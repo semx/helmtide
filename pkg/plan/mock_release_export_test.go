@@ -113,6 +113,8 @@ func (r *MockReleaseConfig) BuildValues(ctx context.Context, dir, templater stri
 		return errReturn
 	}
 
+	//nolint:modernize // slices.Backward yields a copy, and this loop needs the address of
+	// the slice element itself.
 	for i := len(r.Values()) - 1; i >= 0; i-- {
 		v := r.Values()[i]
 		dst := filepath.Join(dir, Values, filepath.Base(v.Src))

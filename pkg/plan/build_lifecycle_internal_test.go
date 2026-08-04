@@ -17,8 +17,8 @@ import (
 
 // journal records what happened during a build, in order.
 type journal struct {
-	mu     sync.Mutex
 	events []string
+	mu     sync.Mutex
 }
 
 func (j *journal) record(event string) {

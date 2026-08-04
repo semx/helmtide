@@ -19,11 +19,9 @@ func buildGraphMD(releases release.Configs) string {
 
 	for _, r := range releases {
 		for _, dep := range r.DependsOn() {
-			md.WriteString(fmt.Sprintf(
-				"\t%s[%q] --> %s[%q]\n",
+			fmt.Fprintf(&md, "\t%s[%q] --> %s[%q]\n",
 				strings.ReplaceAll(r.Uniq().String(), "@", "_"), r.Uniq(),
-				strings.ReplaceAll(dep.Uniq().String(), "@", "_"), dep.Uniq().String(),
-			))
+				strings.ReplaceAll(dep.Uniq().String(), "@", "_"), dep.Uniq().String())
 		}
 	}
 

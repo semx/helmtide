@@ -138,6 +138,10 @@ func (err InvalidWaitStrategyError) Error() string {
 	)
 }
 
+// ErrNilRelease is returned when helm hands back no release and no error. Callers dereference the
+// result as soon as the error is nil, so a nil release has to be an error rather than a value.
+var ErrNilRelease = errors.New("helm returned no release and no error")
+
 type UnexpectedReleaseTypeError struct {
 	Release any
 }

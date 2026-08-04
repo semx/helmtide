@@ -272,6 +272,8 @@ func (rel *config) BuildValues(ctx context.Context, dir, templater string) error
 		return err
 	}
 
+	//nolint:modernize // slices.Backward yields a copy, and this loop needs the address of
+	// the slice element itself.
 	for i := len(vals) - 1; i >= 0; i-- {
 		if toDeleteMap[&vals[i]] {
 			vals = slices.Delete(vals, i, i+1)

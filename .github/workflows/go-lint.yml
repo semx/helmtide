@@ -34,9 +34,8 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
-          # Pinned, and tied to the toolchain in go.mod: v2.4 is built with Go
-          # 1.25 and its type checker panics outright ("file requires newer Go
-          # version go1.26") against a 1.26 standard library. Raising the go
-          # directive means raising this pin too, and v2.12 switches on linters
-          # that report ~37 findings nobody has triaged yet.
-          version: v2.4
+          # Pinned, and tied to the toolchain in go.mod. helm v4 raised that to
+          # 1.26, and v2.4 -- built with Go 1.25 -- refuses to load at all
+          # against it, so this moved with it. The linters v2.12 adds are
+          # accounted for in .golangci.yml rather than left reporting.
+          version: v2.12.2
