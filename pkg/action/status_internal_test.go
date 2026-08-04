@@ -37,6 +37,8 @@ func (ts *StatusTestSuite) TestCmd() {
 }
 
 func (ts *StatusTestSuite) TestRun() {
+	tests.RequireCluster(ts.T())
+
 	r := &Build{
 		plandir: ts.T().TempDir(),
 		tags:    cli.StringSlice{},
