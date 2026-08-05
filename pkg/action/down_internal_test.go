@@ -40,6 +40,9 @@ func (ts *DownTestSuite) TestCmd() {
 }
 
 func (ts *DownTestSuite) TestRun() {
+	tests.RequireCluster(ts.T())
+	tests.RequireRemoteCharts(ts.T())
+
 	tmpDir := ts.T().TempDir()
 	y := &Yml{
 		tpl:       filepath.Join(tests.Root, "02_helmwave.yml"),
@@ -70,6 +73,9 @@ func (ts *DownTestSuite) TestRun() {
 }
 
 func (ts *DownTestSuite) TestIdempotency() {
+	tests.RequireCluster(ts.T())
+	tests.RequireRemoteCharts(ts.T())
+
 	tmpDir := ts.T().TempDir()
 	y := &Yml{
 		tpl:       filepath.Join(tests.Root, "02_helmwave.yml"),

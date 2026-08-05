@@ -40,6 +40,9 @@ func (ts *UpTestSuite) TestCmd() {
 }
 
 func (ts *UpTestSuite) TestAutoBuild() {
+	tests.RequireCluster(ts.T())
+	tests.RequireRemoteCharts(ts.T())
+
 	tmpDir := ts.T().TempDir()
 	y := &Yml{
 		tpl:       filepath.Join(tests.Root, "01_helmwave.yml.tpl"),
@@ -65,6 +68,9 @@ func (ts *UpTestSuite) TestAutoBuild() {
 }
 
 func (ts *UpTestSuite) TestPrometheusMonitors() {
+	tests.RequireCluster(ts.T())
+	tests.RequireRemoteCharts(ts.T())
+
 	tmpDir := ts.T().TempDir()
 	y := &Yml{
 		tpl:       filepath.Join(tests.Root, "20_helmwave.yml"),

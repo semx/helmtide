@@ -6,11 +6,16 @@ import (
 	"testing"
 
 	"github.com/semx/helmtide/pkg/release"
+	"github.com/semx/helmtide/tests"
 	"github.com/stretchr/testify/suite"
 )
 
 type StatusTestSuite struct {
 	suite.Suite
+}
+
+func (s *StatusTestSuite) SetupTest() {
+	tests.RequireCluster(s.T())
 }
 
 func (s *StatusTestSuite) TestNonExistingStatus() {

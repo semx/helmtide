@@ -1,0 +1,11 @@
+kind: CI
+body: >-
+    ci: gate the internet-dependent integration suites (bitnami,
+    prometheus-community, ...) behind HELMTIDE_TEST_REMOTE_CHARTS so a
+    third-party chart CDN outage can never fail CI; the hosted job stays
+    hermetic (local charts + in-cluster registry) while the remote-chart
+    regression is opt-in
+time: 2026-08-06T13:00:00.000000000+04:00
+custom:
+    Author: semx
+    Issue: ""
