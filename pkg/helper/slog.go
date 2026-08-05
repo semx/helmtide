@@ -25,6 +25,15 @@ func NewSlogHandler() *SlogHandler {
 	return &SlogHandler{}
 }
 
+func init() {
+	// Route helm v4's package-level slog output into logrus too. NewCfg installs this handler on
+	// the action.Configuration, but helm's kube waiters (pkg/kube wait.go, ready.go) log through
+	// the global slog.Default() instead -- including slog.Error for failed pods and jobs. Without
+	// setting the default those records skip helmtide's log stream entirely and land on Go's own
+	// stderr handler, which also filters DEBUG so --progress could never surface readiness logs.
+	slog.SetDefault(slog.New(NewSlogHandler()))
+}
+
 // slogLevel converts a slog level to its logrus counterpart.
 func slogLevel(level slog.Level) log.Level {
 	switch {
@@ -39,9 +48,23 @@ func slogLevel(level slog.Level) log.Level {
 	}
 }
 
+// effectiveLevel maps a slog level to its logrus counterpart, promoting DEBUG to INFO while
+// Helm.Debug is set. helm v3 accepted a debug callback and helmtide's --progress flag routed helm's
+// progress output to logrus INFO; helm v4 logs through slog at DEBUG instead, so --progress (which
+// sets Helm.Debug) now surfaces those records here rather than through a callback that no longer
+// exists. The same flag still drives downloader progress via EnvSettings.Debug.
+func effectiveLevel(level slog.Level) log.Level {
+	lvl := slogLevel(level)
+	if Helm.Debug && lvl == log.DebugLevel {
+		return log.InfoLevel
+	}
+
+	return lvl
+}
+
 // Enabled implements slog.Handler.
 func (h *SlogHandler) Enabled(_ context.Context, level slog.Level) bool {
-	return log.IsLevelEnabled(slogLevel(level))
+	return log.IsLevelEnabled(effectiveLevel(level))
 }
 
 // Handle implements slog.Handler.
@@ -68,7 +91,7 @@ func (h *SlogHandler) Handle(_ context.Context, r slog.Record) error {
 		entry = entry.WithError(err)
 	}
 
-	entry.Log(slogLevel(r.Level), r.Message)
+	entry.Log(effectiveLevel(r.Level), r.Message)
 
 	return nil
 }

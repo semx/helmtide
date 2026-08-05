@@ -45,3 +45,29 @@ func TestAsReleaseRejectsTypedNil(t *testing.T) {
 	assert.Nil(t, r)
 	require.ErrorIs(t, err, ErrNilRelease)
 }
+
+// helm hands back a partially built release alongside its error when a sync fails. unwrapRelease
+// must forward the action's error verbatim and never let a conversion error (e.g. ErrNilRelease
+// from a nil release) mask it, or callers report the wrong cause of failure.
+func TestUnwrapReleaseActionErrorWins(t *testing.T) {
+	t.Parallel()
+
+	actionErr := errors.New("upgrade failed")
+
+	// Partial release + action error: forward both, action error wins.
+	partial := &release.Release{Name: "x"}
+	rel, err := unwrapRelease(partial, actionErr)
+	assert.Same(t, partial, rel)
+	require.ErrorIs(t, err, actionErr)
+
+	// No release + action error: the action error wins over ErrNilRelease.
+	rel, err = unwrapRelease(nil, actionErr)
+	assert.Nil(t, rel)
+	require.ErrorIs(t, err, actionErr)
+	require.NotErrorIs(t, err, ErrNilRelease, "conversion error must not mask the action error")
+
+	// No release, no action error: the conversion error surfaces so callers don't deref nil.
+	rel, err = unwrapRelease(nil, nil)
+	assert.Nil(t, rel)
+	require.ErrorIs(t, err, ErrNilRelease)
+}
