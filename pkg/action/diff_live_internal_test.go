@@ -40,6 +40,9 @@ func (ts *DiffLiveTestSuite) TestCmd() {
 }
 
 func (ts *DiffLiveTestSuite) TestRun() {
+	tests.RequireCluster(ts.T())
+	tests.RequireRemoteCharts(ts.T())
+
 	tmpDir := ts.T().TempDir()
 	y := &Yml{
 		tpl:       filepath.Join(tests.Root, "02_helmwave.yml"),

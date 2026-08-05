@@ -23,6 +23,8 @@ func TestUninstallTestSuite(t *testing.T) {
 }
 
 func (ts *UninstallTestSuite) SetupTest() {
+	tests.RequireCluster(ts.T())
+
 	ts.ctx = tests.GetContext(ts.T())
 }
 

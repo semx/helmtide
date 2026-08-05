@@ -58,11 +58,19 @@ jobs:
 
       # The suite only talks to a cluster it is handed, so name the KinD
       # kubeconfig explicitly rather than relying on the ambient environment.
+      #
+      # HELMTIDE_TEST_REMOTE_CHARTS is deliberately left unset: the suites that
+      # pull charts from third-party repos (bitnami, prometheus-community, ...)
+      # skip here so a hosted CDN outage can never turn this job red. That
+      # regression runs on the self-hosted runners against a long-lived cluster,
+      # where reaching the public internet is the point.
       - name: Point the suite at KinD
         run: |
-          echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
-          echo "HELMTIDE_TEST_CLUSTER=$HOME/.kube/config" >> "$GITHUB_ENV"
-          echo "HELMTIDE_TEST_OCI_PLAIN=localhost:5000" >> "$GITHUB_ENV"
+          {
+            echo "KUBECONFIG=$HOME/.kube/config"
+            echo "HELMTIDE_TEST_CLUSTER=$HOME/.kube/config"
+            echo "HELMTIDE_TEST_OCI_PLAIN=localhost:5000"
+          } >> "$GITHUB_ENV"
 
       - name: Check the cluster answers
         run: kubectl cluster-info

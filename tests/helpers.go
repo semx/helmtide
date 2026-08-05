@@ -86,6 +86,26 @@ func RequireCluster(t *testing.T) {
 	}
 }
 
+// RemoteChartsEnv opts a test into pulling charts from the public internet
+// (bitnami, prometheus-community, jetstack, raw gists, ...). Those repositories
+// are outside our control: bitnami moved its public catalog to an archive in
+// 2025, gists get deleted, indexes rate-limit. A release must not go red because
+// someone else's CDN blinked, so the network-dependent suites inherited from
+// upstream are opt-in and nothing but this variable turns them on.
+const RemoteChartsEnv = "HELMTIDE_TEST_REMOTE_CHARTS"
+
+// RequireRemoteCharts skips a test unless pulling charts from the public
+// internet was explicitly requested. Symmetric to RequireCluster: the hermetic
+// suite (local charts + an in-cluster registry) always runs, while the tests
+// that reach out to third-party chart repos only run when asked to.
+func RequireRemoteCharts(t *testing.T) {
+	t.Helper()
+
+	if _, ok := os.LookupEnv(RemoteChartsEnv); !ok {
+		t.Skipf("needs public chart repos: set %s=1 to run this", RemoteChartsEnv)
+	}
+}
+
 func GetContext(t *testing.T) context.Context {
 	t.Helper()
 

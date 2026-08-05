@@ -49,6 +49,9 @@ func (ts *DiffLocalTestSuite) TestCmd() {
 }
 
 func (ts *DiffLocalTestSuite) TestRun() {
+	tests.RequireCluster(ts.T())
+	tests.RequireRemoteCharts(ts.T())
+
 	s1 := &Build{
 		plandir: ts.T().TempDir(),
 		tags:    cli.StringSlice{},
