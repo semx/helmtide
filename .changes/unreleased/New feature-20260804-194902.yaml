@@ -1,9 +1,0 @@
-kind: New feature
-body: >-
-    feat: `wait` also accepts a helm v4 wait strategy (`watcher`, `legacy`,
-    `hookOnly`), and `server_side_apply`, `force_conflicts` and
-    `post_render_strategy` expose the new helm v4 options
-time: 2026-08-04T19:49:02.000000000+04:00
-custom:
-    Author: semx
-    Issue: ""

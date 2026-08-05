@@ -1,6 +1,0 @@
-kind: Fixed
-body: 'fix: honor per-chart `plain_http`/`insecure` for OCI registries (helm v4 ignored them on an injected client)'
-time: 2026-08-05T10:15:00.000000000+04:00
-custom:
-    Author: semx
-    Issue: ""
