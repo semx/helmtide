@@ -1,0 +1,54 @@
+name: Regression (self-hosted)
+
+# The full integration suite, including the parts that pull charts from public
+# repos (bitnami, prometheus-community, ...). Those are gated out of the hosted
+# CI by HELMTIDE_TEST_REMOTE_CHARTS so a third-party CDN outage can never fail a
+# pull request; here reaching the public internet is exactly the point.
+#
+# Runs on a self-hosted runner against a long-lived KinD/k3s cluster on the LAN,
+# whose kubeconfig is provided as the KUBECONFIG_REGRESSION secret. Scheduled
+# nightly and available on demand; never a required check.
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # One run at a time: the suite derives namespaces from test names, so two runs
+  # against the same cluster would collide.
+  group: regression
+  cancel-in-progress: false
+
+jobs:
+  regression:
+    # A single runner on purpose -- see the concurrency note above.
+    runs-on: [self-hosted, linux, ubuntu-24.04]
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Hand the suite the cluster and turn remote charts on
+        env:
+          KUBECONFIG_REGRESSION: ${{ secrets.KUBECONFIG_REGRESSION }}
+        run: |
+          install -d -m 700 "$RUNNER_TEMP/kube"
+          printf '%s' "$KUBECONFIG_REGRESSION" > "$RUNNER_TEMP/kube/config"
+          chmod 600 "$RUNNER_TEMP/kube/config"
+          {
+            echo "HELMTIDE_TEST_CLUSTER=$RUNNER_TEMP/kube/config"
+            echo "HELMTIDE_TEST_REMOTE_CHARTS=1"
+          } >> "$GITHUB_ENV"
+
+      - name: Build
+        run: go build ./...
+
+      - name: Run the full integration suite
+        run: go test -tags=integration -covermode=atomic -timeout=40m ./...
