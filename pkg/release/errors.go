@@ -169,3 +169,17 @@ func (err HelmTestsError) Error() string {
 func (err HelmTestsError) Unwrap() error {
 	return err.Err
 }
+
+// InvalidServerSideApplyError is returned when server_side_apply is not one of
+// "", "true", "false" or "auto".
+type InvalidServerSideApplyError struct {
+	Value string
+}
+
+func NewInvalidServerSideApplyError(v string) error {
+	return &InvalidServerSideApplyError{Value: v}
+}
+
+func (e InvalidServerSideApplyError) Error() string {
+	return fmt.Sprintf("server_side_apply must be \"true\", \"false\" or \"auto\", got %q", e.Value)
+}

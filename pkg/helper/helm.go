@@ -1,7 +1,9 @@
 package helper
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"os"
 
 	"k8s.io/apimachinery/pkg/version"
@@ -32,6 +34,42 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+// NewRegistryClient builds a registry client for a single release whose chart needs a non-default
+// OCI transport (plain HTTP or a skipped TLS verification).
+//
+// The package-global HelmRegistryClient is TLS-only, and helm v4's OCI getter uses an injected
+// registry client verbatim -- it only honors plain_http / insecure when it builds its own client
+// (see pkg/getter/ocigetter.go). So the shared client can never reach a plain-HTTP or insecure
+// registry; a per-release client carrying these options is the only way the per-chart flags reach
+// the OCI transport. Mirrors helm's own cmd.newRegistryClient.
+func NewRegistryClient(plainHTTP, insecureSkipTLSVerify bool) (*registry.Client, error) {
+	opts := []registry.ClientOption{
+		registry.ClientOptDebug(Helm.Debug),
+		registry.ClientOptWriter(log.StandardLogger().Writer()),
+		registry.ClientOptCredentialsFile(Helm.RegistryConfig),
+	}
+
+	if insecureSkipTLSVerify {
+		opts = append(opts, registry.ClientOptHTTPClient(&http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // the chart explicitly asked for it
+				Proxy:           http.ProxyFromEnvironment,
+			},
+		}))
+	}
+
+	if plainHTTP {
+		opts = append(opts, registry.ClientOptPlainHTTP())
+	}
+
+	client, err := registry.NewClient(opts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create registry client: %w", err)
+	}
+
+	return client, nil
 }
 
 func wrapConfigFn(client *rest.Config) *rest.Config {

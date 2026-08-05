@@ -16,6 +16,12 @@ func asRelease(r releaseiface.Releaser) (*release.Release, error) {
 	case nil:
 		return nil, ErrNilRelease
 	case *release.Release:
+		if v == nil {
+			// A typed nil pointer is still "no release": callers dereference the
+			// result the moment the error is nil, so it has to be an error too.
+			return nil, ErrNilRelease
+		}
+
 		return v, nil
 	case release.Release:
 		return &v, nil
