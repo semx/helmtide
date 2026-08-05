@@ -5,6 +5,11 @@ run:
 linters:
   default: all
   disable:
+    # Renamed in golangci-lint v2.12; the old name warns on every run. Its
+    # replacement gomodguard_v2 stays enabled through `default: all`. Neither
+    # carries a settings block here, so both are no-ops -- this only silences
+    # the deprecation warning without changing what gets reported.
+    - gomodguard
     # Turned on by golangci-lint v2.12, which the Go 1.26 toolchain forced us onto.
     # Between them they report 34 findings, all in code inherited from helmwave and
     # none of them a defect: repeated string literals and slices that could be

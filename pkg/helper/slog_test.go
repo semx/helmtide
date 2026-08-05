@@ -1,4 +1,4 @@
-package helper
+package helper_test
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"testing"
 
+	"github.com/semx/helmtide/pkg/helper"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,7 +37,7 @@ func captureLogrus(t *testing.T, level log.Level, fn func()) []map[string]any {
 	fn()
 
 	var records []map[string]any
-	for _, line := range bytes.Split(bytes.TrimSpace(buf.Bytes()), []byte("\n")) {
+	for line := range bytes.SplitSeq(bytes.TrimSpace(buf.Bytes()), []byte("\n")) {
 		if len(line) == 0 {
 			continue
 		}
@@ -50,7 +51,7 @@ func captureLogrus(t *testing.T, level log.Level, fn func()) []map[string]any {
 
 func TestSlogHandlerForwardsLevelsAndMessage(t *testing.T) {
 	recs := captureLogrus(t, log.DebugLevel, func() {
-		l := slog.New(NewSlogHandler())
+		l := slog.New(helper.NewSlogHandler())
 		l.Debug("dbg")
 		l.Info("inf")
 		l.Warn("wrn")
@@ -67,7 +68,7 @@ func TestSlogHandlerForwardsLevelsAndMessage(t *testing.T) {
 
 func TestSlogHandlerDebugHiddenAtInfoLevel(t *testing.T) {
 	recs := captureLogrus(t, log.InfoLevel, func() {
-		l := slog.New(NewSlogHandler())
+		l := slog.New(helper.NewSlogHandler())
 		l.Debug("hidden")
 		l.Info("shown")
 	})
@@ -76,19 +77,19 @@ func TestSlogHandlerDebugHiddenAtInfoLevel(t *testing.T) {
 	assert.Equal(t, "shown", recs[0]["msg"])
 }
 
-// --progress (which sets Helm.Debug) promotes helm's DEBUG records to INFO so they surface without
-// turning the whole logger to debug. This is the behaviour the flag documents.
+// --progress (which sets helper.Helm.Debug) promotes helm's DEBUG records to INFO so they surface without
+// turning the whole logger to debug. This is the behavior the flag documents.
 func TestSlogHandlerProgressPromotesDebugToInfo(t *testing.T) {
-	t.Cleanup(func() { Helm.Debug = false })
-	Helm.Debug = true
+	t.Cleanup(func() { helper.Helm.Debug = false })
+	helper.Helm.Debug = true
 
 	recs := captureLogrus(t, log.InfoLevel, func() {
-		l := slog.New(NewSlogHandler())
+		l := slog.New(helper.NewSlogHandler())
 		l.Debug("helm progress")
 		l.Info("plain info")
 	})
 
-	require.Len(t, recs, 2, "debug must be visible at info level while Helm.Debug is set")
+	require.Len(t, recs, 2, "debug must be visible at info level while helper.Helm.Debug is set")
 	assert.Equal(t, "info", recs[0]["level"], "promoted debug must log at info")
 	assert.Equal(t, "helm progress", recs[0]["msg"])
 	assert.Equal(t, "info", recs[1]["level"])
@@ -96,7 +97,7 @@ func TestSlogHandlerProgressPromotesDebugToInfo(t *testing.T) {
 
 func TestSlogHandlerFlattensGroupsAndAttrs(t *testing.T) {
 	recs := captureLogrus(t, log.DebugLevel, func() {
-		l := slog.New(NewSlogHandler())
+		l := slog.New(helper.NewSlogHandler())
 		l.WithGroup("outer").
 			With("base", 1).
 			Info("msg", slog.Group("inner", slog.String("k", "v")), slog.Int("n", 2))
@@ -111,7 +112,7 @@ func TestSlogHandlerFlattensGroupsAndAttrs(t *testing.T) {
 
 func TestSlogHandlerEmptyKeysAndGroupsIgnored(t *testing.T) {
 	recs := captureLogrus(t, log.DebugLevel, func() {
-		l := slog.New(NewSlogHandler())
+		l := slog.New(helper.NewSlogHandler())
 		// Empty group name and empty attr key must not create bogus dotted fields.
 		l.WithGroup("").Info("msg", slog.String("", "dropped"), slog.Group("empty"), slog.String("keep", "yes"))
 	})
@@ -128,7 +129,7 @@ func TestSlogHandlerEmptyKeysAndGroupsIgnored(t *testing.T) {
 func TestSlogHandlerErrorKeyBecomesLogrusError(t *testing.T) {
 	sentinel := errors.New("boom")
 	recs := captureLogrus(t, log.DebugLevel, func() {
-		l := slog.New(NewSlogHandler())
+		l := slog.New(helper.NewSlogHandler())
 		l.Error("failed", slog.Any("error", sentinel))
 	})
 
@@ -138,7 +139,7 @@ func TestSlogHandlerErrorKeyBecomesLogrusError(t *testing.T) {
 
 func TestSlogHandlerResolvesLogValuer(t *testing.T) {
 	recs := captureLogrus(t, log.DebugLevel, func() {
-		l := slog.New(NewSlogHandler())
+		l := slog.New(helper.NewSlogHandler())
 		l.Info("msg", slog.Any("v", logValuerStub{}))
 	})
 
@@ -154,7 +155,7 @@ func (logValuerStub) LogValue() slog.Value { return slog.StringValue("resolved")
 // init must point that default at logrus so those records stay in helmtide's stream.
 func TestGlobalSlogDefaultRoutesThroughLogrus(t *testing.T) {
 	recs := captureLogrus(t, log.InfoLevel, func() {
-		// Not slog.New(NewSlogHandler()) -- exercise the process-wide default the init sets.
+		// Not slog.New(helper.NewSlogHandler()) -- exercise the process-wide default the init sets.
 		slog.Default().Error("pod failed", "pod", "demo")
 	})
 
@@ -169,15 +170,15 @@ func TestSlogHandlerEnabledRespectsProgress(t *testing.T) {
 	prev := std.GetLevel()
 	t.Cleanup(func() {
 		std.SetLevel(prev)
-		Helm.Debug = false
+		helper.Helm.Debug = false
 	})
 	std.SetLevel(log.InfoLevel)
 
-	h := NewSlogHandler()
+	h := helper.NewSlogHandler()
 
-	Helm.Debug = false
+	helper.Helm.Debug = false
 	assert.False(t, h.Enabled(context.Background(), slog.LevelDebug), "debug is off at info level")
 
-	Helm.Debug = true
+	helper.Helm.Debug = true
 	assert.True(t, h.Enabled(context.Background(), slog.LevelDebug), "progress makes debug enabled")
 }

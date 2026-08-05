@@ -21,6 +21,7 @@ func asRelease(r releaseiface.Releaser) (*release.Release, error) {
 			// result the moment the error is nil, so it has to be an error too.
 			return nil, ErrNilRelease
 		}
+
 		return v, nil
 	case release.Release:
 		return &v, nil
