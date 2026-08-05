@@ -1,0 +1,6 @@
+apiVersion: v2
+name: hooked
+description: One ordinary ConfigMap plus one Helm-hook ConfigMap, so a test can tell whether hooks fired and whether the post-renderer saw them.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

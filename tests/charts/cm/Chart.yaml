@@ -1,0 +1,6 @@
+apiVersion: v2
+name: cm
+description: A single ConfigMap, so integration tests can assert live state without waiting on a pod to schedule.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

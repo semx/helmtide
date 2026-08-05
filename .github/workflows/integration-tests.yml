@@ -1,12 +1,32 @@
 name: Integration tests
 
-# The `integration` build tag covers the tests that install, diff, roll back and
-# uninstall real releases, so they need a real API server. They are on manual
-# dispatch rather than on every pull request because nobody in this fork has
-# watched them go green in CI yet; promote them to `pull_request` once they have.
+# The integration suite installs, upgrades, rolls back, hooks, monitors,
+# post-renders and uninstalls real releases, so it needs a real API server.
+# It runs against a throwaway KinD cluster created in the job.
+#
+# The tests refuse to touch a cluster unless HELMTIDE_TEST_CLUSTER names a
+# kubeconfig (tests/helpers.go pins KUBECONFIG to a dead end otherwise), so the
+# opt-in is explicit here and nowhere else.
 #
 # Locally: HELMTIDE_TEST_CLUSTER=~/.kube/config go test -tags=integration ./...
+# The OCI test additionally needs a plain-HTTP registry; set HELMTIDE_TEST_OCI_PLAIN.
 on:
+  push:
+    branches: [ main ]
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - "tests/**"
+      - .github/workflows/integration-tests.yml
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - "tests/**"
+      - .github/workflows/integration-tests.yml
   workflow_dispatch:
 
 permissions:
@@ -15,22 +35,34 @@ permissions:
 jobs:
   integration-tests:
     runs-on: ubuntu-latest
+
+    services:
+      # A plain-HTTP OCI registry for the OCI regression test. registry:2 serves
+      # HTTP with no TLS, which is exactly what plain_http: true has to talk to.
+      # Reachable on localhost from the runner, where the chart push and pull
+      # happen; the cluster never touches it.
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
+
     steps:
       - uses: actions/checkout@v6
 
       - name: Create KinD cluster
-        uses: container-tools/kind-action@v2
+        # Pinned to a commit-tagged release; brings up a single-node cluster and
+        # writes its kubeconfig to ~/.kube/config.
+        uses: helm/kind-action@v1.12.0
         with:
-          config: tests/kind-config.yaml
-          registry: false
+          cluster_name: helmtide-it
 
-      # The suite refuses to touch a cluster unless it is handed one, so point
-      # it at the KinD kubeconfig explicitly instead of relying on whatever is
-      # in the environment.
+      # The suite only talks to a cluster it is handed, so name the KinD
+      # kubeconfig explicitly rather than relying on the ambient environment.
       - name: Point the suite at KinD
         run: |
           echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
           echo "HELMTIDE_TEST_CLUSTER=$HOME/.kube/config" >> "$GITHUB_ENV"
+          echo "HELMTIDE_TEST_OCI_PLAIN=localhost:5000" >> "$GITHUB_ENV"
 
       - name: Check the cluster answers
         run: kubectl cluster-info
@@ -41,6 +73,9 @@ jobs:
 
       - name: Install go modules
         run: go mod download
+
+      - name: Build
+        run: go build ./...
 
       - name: Run integration tests
         run: go test -tags=integration -covermode=atomic -timeout=30m ./...

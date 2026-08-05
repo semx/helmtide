@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-hook
+  annotations:
+    # A hook rather than an ordinary resource. Helm applies it in its own phase,
+    # and only feeds it through the post-renderer under the combined/separate
+    # strategies -- never under nohooks. before-hook-creation keeps upgrades
+    # idempotent by clearing the previous copy first.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  role: hook

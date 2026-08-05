@@ -1,0 +1,3 @@
+# value ends up in the ConfigMap's data, so a test can change it between
+# revisions and read the change (or its rollback) straight off the cluster.
+value: default

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-main
+data:
+  role: main
+  # Lets a test force a genuine upgrade so the post-upgrade hook has to re-fire.
+  rev: {{ .Values.rev | default "1" | quote }}
