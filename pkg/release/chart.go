@@ -88,6 +88,28 @@ func (c *Chart) IsRemote() bool {
 	return !helper.IsExists(filepath.Clean(c.Name))
 }
 
+// applyOCIRegistryClient swaps the shared TLS-only registry client for a per-release one when the
+// chart is an OCI reference that asked for plain HTTP or a skipped TLS verification. helm v4's OCI
+// getter uses an injected registry client as-is and never applies these flags to it, so the shared
+// client can't reach such a registry. For every other chart the shared client stays the default and
+// setClient is left untouched.
+func (rel *config) applyOCIRegistryClient(setClient func(*registry.Client)) {
+	c := rel.Chart()
+	if !registry.IsOCI(c.Name) || (!c.PlainHTTP && !c.InsecureSkipTLSVerify) {
+		return
+	}
+
+	rc, err := helper.NewRegistryClient(c.PlainHTTP, c.InsecureSkipTLSVerify)
+	if err != nil {
+		rel.Logger().WithError(err).
+			Error("failed to build a dedicated OCI registry client, falling back to the shared TLS client")
+
+		return
+	}
+
+	setClient(rc)
+}
+
 func (rel *config) LocateChartWithCache() (string, error) {
 	if !rel.Chart().IsRemote() {
 		return rel.Chart().Name, nil

@@ -48,6 +48,7 @@ func (rel *config) newInstall() *action.Install {
 	client.HideSecret = rel.hideSecret
 
 	rel.Chart().CopyOptions(&client.ChartPathOptions)
+	rel.applyOCIRegistryClient(client.SetRegistryClient)
 
 	client.DisableHooks = rel.DisableHooks
 	client.SkipCRDs = rel.SkipCRDs
@@ -108,6 +109,7 @@ func (rel *config) newUpgrade() *action.Upgrade {
 	client.HideSecret = rel.hideSecret
 
 	rel.Chart().CopyOptions(&client.ChartPathOptions)
+	rel.applyOCIRegistryClient(client.SetRegistryClient)
 
 	client.ForceReplace = rel.ForceReplace
 	client.ForceConflicts = rel.ForceConflicts
