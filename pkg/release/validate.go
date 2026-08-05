@@ -21,6 +21,15 @@ func (rel *config) Validate() error {
 		return err
 	}
 
+	// server_side_apply is a three-way string, and install treats anything but
+	// exact "false" as on. So "flase" silently enables SSA on install and then
+	// fails on upgrade -- reject an unknown value up front instead.
+	switch rel.ServerSideApply {
+	case "", "true", "false", "auto":
+	default:
+		return NewInvalidServerSideApplyError(rel.ServerSideApply)
+	}
+
 	return nil
 }
 

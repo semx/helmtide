@@ -34,3 +34,14 @@ func TestAsReleaseNeverReturnsNilWithoutError(t *testing.T) {
 	var unexpected *UnexpectedReleaseTypeError
 	assert.True(t, errors.As(err, &unexpected), "an unknown type must say so, not look like a nil")
 }
+
+// A typed nil pointer must be treated as "no release", not returned as a nil
+// value with a nil error, or Plan.List dereferences it.
+func TestAsReleaseRejectsTypedNil(t *testing.T) {
+	t.Parallel()
+
+	var typed *release.Release
+	r, err := asRelease(typed)
+	assert.Nil(t, r)
+	require.ErrorIs(t, err, ErrNilRelease)
+}

@@ -39,7 +39,7 @@ type config struct {
 	KubeContextF        string       `yaml:"context,omitempty" json:"context,omitempty"`
 	DeletePropagation   string       `yaml:"delete_propagation,omitempty" json:"delete_propagation,omitempty" jsonschema:"description=Selects the deletion cascading strategy for the dependents,enum=background,enum=orphan,enum=foreground,default=background"`
 	ServerSideApply     string       `yaml:"server_side_apply,omitempty" json:"server_side_apply,omitempty" jsonschema:"description=Whether to apply objects server-side,enum=true,enum=false,enum=auto,default=auto"`
-	PostRenderStrategy  string       `yaml:"post_render_strategy,omitempty" json:"post_render_strategy,omitempty" jsonschema:"description=How hooks and templates are handed to the post_renderer,enum=combined,enum=separate,enum=nohooks,default=combined"`
+	PostRenderStrategy  string       `yaml:"post_render_strategy,omitempty" json:"post_render_strategy,omitempty" jsonschema:"description=How hooks and templates are handed to the post_renderer,enum=combined,enum=separate,enum=nohooks,default=nohooks"`
 	WaitStrategy        WaitStrategy `yaml:"wait,omitempty" json:"wait,omitempty" jsonschema:"description=Whether to wait for all resource to become ready,default=false"`
 
 	DependsOnF    []*DependsOnReference `yaml:"depends_on,omitempty" json:"depends_on,omitempty" jsonschema:"title=Needs,description=List of dependencies that are required to succeed before this release"`
@@ -181,7 +181,10 @@ func (rel *config) serverSideApply() string {
 // postRenderStrategy returns how the post-renderer is fed, defaulting to what helm defaults to.
 func (rel *config) postRenderStrategy() action.PostRenderStrategy {
 	if rel.PostRenderStrategy == "" {
-		return action.PostRenderStrategyCombined
+		// helm 3 ran the post-renderer over the manifests only, after hooks were
+		// separated out. nohooks keeps that; combined (helm 4's own default) would
+		// feed hooks through the post-renderer too and change existing releases.
+		return action.PostRenderStrategyNoHooks
 	}
 
 	return action.PostRenderStrategy(rel.PostRenderStrategy)
