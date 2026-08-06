@@ -1,9 +1,0 @@
-kind: Other
-body: >-
-    logs: replace decorative emoji in log and CLI usage strings with clear,
-    informative messages (e.g. "syncing releases", "release deployed",
-    "plan has no changes") for a more professional, greppable output
-time: 2026-08-06T17:00:00.000000000+04:00
-custom:
-    Author: semx
-    Issue: ""

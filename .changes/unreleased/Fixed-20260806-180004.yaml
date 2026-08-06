@@ -1,8 +1,0 @@
-kind: Fixed
-body: >-
-    fix a data race on the monitor-failures map and make failed-monitor
-    remediation deterministic (safer action wins); skip canceled monitor runs
-time: 2026-08-06T18:00:04.000000000+04:00
-custom:
-    Author: semx
-    Issue: ""
