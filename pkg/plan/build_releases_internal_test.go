@@ -333,6 +333,74 @@ func (ts *BuildReleasesTestSuite) TestSelfDependencyCycle() {
 	rel.AssertExpectations(ts.T())
 }
 
+// TestDiamondDependency proves the visited-set early-return does not drop a
+// shared dependency edge. A -> {B, C} and both B -> D and C -> D. When C is
+// expanded, D is already visited (added via B), yet C's edge to D must still be
+// preserved: each release appears once, D is present, and SetDependsOn is
+// invoked with the D edge on both B and C.
+func (ts *BuildReleasesTestSuite) TestDiamondDependency() {
+	tmpDir := ts.T().TempDir()
+	p := New(filepath.Join(tmpDir, Dir))
+
+	tags := []string{"bla"}
+	uA, _ := uniqname.New("diamonda", "", "")
+	uB, _ := uniqname.New("diamondb", "", "")
+	uC, _ := uniqname.New("diamondc", "", "")
+	uD, _ := uniqname.New("diamondd", "", "")
+
+	depsA := []*release.DependsOnReference{{Name: uB.String()}, {Name: uC.String()}}
+	depsB := []*release.DependsOnReference{{Name: uD.String()}}
+	depsC := []*release.DependsOnReference{{Name: uD.String()}}
+	depsD := []*release.DependsOnReference{}
+
+	relA := NewMockReleaseConfig(ts.T())
+	relA.On("Tags").Return(tags)
+	relA.On("Uniq").Return(uA)
+	relA.On("DependsOn").Return(depsA)
+	relA.On("SetDependsOn", depsA).Return()
+
+	relB := NewMockReleaseConfig(ts.T())
+	relB.On("Tags").Return(tags)
+	relB.On("Uniq").Return(uB)
+	relB.On("DependsOn").Return(depsB)
+	relB.On("SetDependsOn", depsB).Return()
+
+	relC := NewMockReleaseConfig(ts.T())
+	relC.On("Tags").Return(tags)
+	relC.On("Uniq").Return(uC)
+	relC.On("DependsOn").Return(depsC)
+	relC.On("SetDependsOn", depsC).Return()
+
+	relD := NewMockReleaseConfig(ts.T())
+	relD.On("Tags").Return(tags)
+	relD.On("Uniq").Return(uD)
+	relD.On("DependsOn").Return(depsD)
+	relD.On("SetDependsOn", depsD).Return()
+
+	p.SetReleases(relA, relB, relC, relD)
+
+	releases, err := p.buildReleases(BuildOptions{Tags: tags, MatchAll: true, EnableDependencies: true})
+	ts.Require().NoError(err)
+
+	// Each release appears exactly once, including the shared node D.
+	ts.Len(releases, 4)
+	ts.Contains(releases, relA)
+	ts.Contains(releases, relB)
+	ts.Contains(releases, relC)
+	ts.Contains(releases, relD)
+
+	// The diamond is acyclic, so the graph builds without a loop error.
+	_, graphErr := p.body.generateDependencyGraph()
+	ts.Require().NoError(graphErr)
+
+	// AssertExpectations verifies SetDependsOn(relC, depsC) was called even though
+	// D was already visited when C was expanded — i.e. the edge was not dropped.
+	relA.AssertExpectations(ts.T())
+	relB.AssertExpectations(ts.T())
+	relC.AssertExpectations(ts.T())
+	relD.AssertExpectations(ts.T())
+}
+
 func (ts *BuildReleasesTestSuite) TestDisabledDependencies() {
 	tmpDir := ts.T().TempDir()
 	p := New(filepath.Join(tmpDir, Dir))

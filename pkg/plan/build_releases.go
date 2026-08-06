@@ -86,6 +86,10 @@ func addToPlanWithDependenciesVisited(
 	// Already expanded (or currently being expanded) in this dependency chain.
 	// Stop descending so a cycle is tolerated here — each node is added once and
 	// the resulting graph is left for Graph.Build to report as a loop.
+	// NOTE: this pre-add check is keyed by Uniq, so it also short-circuits a
+	// second, distinct config sharing an already-seen Uniq. That only happens for
+	// already-invalid configs (duplicate uniqnames), which addToPlan would reject
+	// anyway on the first, unguarded top-level pass — so no valid plan is masked.
 	if _, seen := visited[rel.Uniq()]; seen {
 		return plan, nil
 	}
