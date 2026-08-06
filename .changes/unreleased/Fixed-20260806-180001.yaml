@@ -1,0 +1,10 @@
+kind: Fixed
+body: >-
+    plan export no longer risks deleting the system temp dir or an unsafe
+    --plandir ('.', '/', ''): the dangerous os.TempDir() fallback is gone and
+    export now validates the target and stages atomically, restoring the
+    previous plan if a new export fails partway
+time: 2026-08-06T18:00:01.000000000+04:00
+custom:
+    Author: semx
+    Issue: ""

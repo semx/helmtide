@@ -14,24 +14,143 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// validatePlanDir resolves dir to an absolute path and rejects locations that
+// must never be recursively deleted on export. wd is the current working
+// directory (passed in so it can be exercised deterministically in tests).
+func validatePlanDir(dir, wd string) (string, error) {
+	if dir == "" {
+		return "", fmt.Errorf("%w: path is empty", ErrUnsafePlanDir)
+	}
+
+	if clean := filepath.Clean(dir); clean == "." || clean == ".." {
+		return "", fmt.Errorf("%w: refusing to use %q", ErrUnsafePlanDir, clean)
+	}
+
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return "", fmt.Errorf("%w: cannot resolve %q: %w", ErrUnsafePlanDir, dir, err)
+	}
+	abs = filepath.Clean(abs)
+
+	// Filesystem root: for the root path filepath.Dir(root) == root.
+	if abs == filepath.Dir(abs) {
+		return "", fmt.Errorf("%w: refusing to use filesystem root %q", ErrUnsafePlanDir, abs)
+	}
+
+	if wd != "" && abs == filepath.Clean(wd) {
+		return "", fmt.Errorf("%w: refusing to use the current working directory %q", ErrUnsafePlanDir, abs)
+	}
+
+	if abs == filepath.Clean(os.TempDir()) {
+		return "", fmt.Errorf("%w: refusing to use the shared temp root %q", ErrUnsafePlanDir, abs)
+	}
+
+	return abs, nil
+}
+
+// isSafeToRemove reports whether dir may be handed to os.RemoveAll. It guards
+// against wiping an empty path, the filesystem root or the shared temp root
+// (e.g. if tmpDir allocation ever leaves a dangerous value).
+func isSafeToRemove(dir string) bool {
+	if dir == "" {
+		return false
+	}
+
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return false
+	}
+	abs = filepath.Clean(abs)
+
+	if abs == filepath.Dir(abs) { // filesystem root
+		return false
+	}
+
+	if abs == filepath.Clean(os.TempDir()) {
+		return false
+	}
+
+	return true
+}
+
+// cleanTmpDir removes the plan's private temporary directory, but never an
+// empty/root/temp-root path.
+func (p *Plan) cleanTmpDir() {
+	if !isSafeToRemove(p.tmpDir) {
+		return
+	}
+
+	if err := os.RemoveAll(p.tmpDir); err != nil {
+		p.Logger().WithError(err).Error("failed to remove temporary directory")
+	}
+}
+
+// stashDir atomically moves an existing dir aside to a unique sibling path and
+// returns that path. If dir does not exist it returns "" and no error.
+func stashDir(dir string) (string, error) {
+	if !helper.IsExists(dir) {
+		return "", nil
+	}
+
+	// Reserve a unique sibling name on the same filesystem so os.Rename below
+	// is atomic and the later rename-back cannot cross a mount boundary.
+	placeholder, err := os.MkdirTemp(filepath.Dir(dir), filepath.Base(dir)+".bak-*")
+	if err != nil {
+		return "", err
+	}
+	if err := os.Remove(placeholder); err != nil {
+		return "", err
+	}
+
+	if err := os.Rename(dir, placeholder); err != nil {
+		return "", err
+	}
+
+	return placeholder, nil
+}
+
 // Export allows save plan to file.
 func (p *Plan) Export(ctx context.Context, skipUnchanged bool) error {
+	if p.initErr != nil {
+		return p.initErr
+	}
+
 	wd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to get current directory: %w", err)
 	}
 
-	log.Tracef("I am exporting plan to %s", filepath.Join(wd, p.dir))
-
-	if err := os.RemoveAll(p.dir); err != nil {
-		return fmt.Errorf("failed to clean plan directory %s: %w", p.dir, err)
+	dest, err := validatePlanDir(p.dir, wd)
+	if err != nil {
+		return err
 	}
-	defer func(dir string) {
-		err := os.RemoveAll(dir)
-		if err != nil {
-			p.Logger().WithError(err).Error("failed to remove temporary directory")
+
+	log.Tracef("I am exporting plan to %s", dest)
+
+	// Always try to clean our private temp dir, but never the shared temp root.
+	defer p.cleanTmpDir()
+
+	// Move any existing plan aside instead of deleting it up front. On a mid
+	// export failure it is restored, so the user is never left with neither the
+	// old nor the new plan; on success it is removed only after the new plan is
+	// complete.
+	backup, err := stashDir(dest)
+	if err != nil {
+		return fmt.Errorf("failed to move existing plan aside: %w", err)
+	}
+
+	fail := func(cause error) error {
+		if rmErr := os.RemoveAll(dest); rmErr != nil {
+			p.Logger().WithError(rmErr).Error("failed to remove incomplete plan")
 		}
-	}(p.tmpDir)
+		if backup != "" {
+			if rErr := os.Rename(backup, dest); rErr != nil {
+				return fmt.Errorf("%w (also failed to restore previous plan from %s: %v)", cause, backup, rErr)
+			}
+		}
+
+		return cause
+	}
 
 	if skipUnchanged {
 		p.removeUnchanged()
@@ -66,13 +185,23 @@ func (p *Plan) Export(ctx context.Context, skipUnchanged bool) error {
 		}
 	}()
 
-	err = wg.Wait()
-	if err != nil {
-		return err
+	if err := wg.Wait(); err != nil {
+		return fail(err)
 	}
 
-	// Save Planfile after everything is exported
-	return helper.SaveInterface(ctx, p.fullPath, p.body)
+	// Save Planfile after everything is exported.
+	if err := helper.SaveInterface(ctx, p.fullPath, p.body); err != nil {
+		return fail(err)
+	}
+
+	// New plan is complete: drop the previous copy.
+	if backup != "" {
+		if err := os.RemoveAll(backup); err != nil {
+			p.Logger().WithError(err).Warn("failed to remove previous plan backup")
+		}
+	}
+
+	return nil
 }
 
 func (p *Plan) removeUnchanged() {
