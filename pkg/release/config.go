@@ -222,6 +222,12 @@ func (rel *config) buildAfterUnmarshalDependsOn(allReleases []*config) {
 					continue
 				}
 
+				// A release must not depend on itself via a tag it also carries;
+				// a self-dependency would form a trivial cycle.
+				if r.Uniq().Equal(rel.Uniq()) {
+					continue
+				}
+
 				newDep := &DependsOnReference{
 					Name:     r.Uniq().String(),
 					Optional: dep.Optional,

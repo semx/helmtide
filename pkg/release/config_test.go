@@ -34,6 +34,32 @@ func (s *ConfigTestSuite) TestConfigUniqTags() {
 	s.Require().True(slices.Contains(r.TagsF, r.Uniq().String()))
 }
 
+// TestTagDependencyExcludesSelf ensures a release depending on a tag it also
+// carries does not become a dependency of itself (which would form a cycle),
+// while still depending on the other releases sharing that tag.
+func (s *ConfigTestSuite) TestTagDependencyExcludesSelf() {
+	r1 := release.NewConfig()
+	r1.NameF = "weba"
+	r1.NamespaceF = "test"
+	r1.TagsF = []string{"grp"}
+	r1.DependsOnF = []*release.DependsOnReference{{Tag: "grp"}}
+
+	r2 := release.NewConfig()
+	r2.NameF = "webb"
+	r2.NamespaceF = "test"
+	r2.TagsF = []string{"grp"}
+
+	r1.BuildAfterUnmarshal(r1, r2)
+
+	deps := r1.DependsOn()
+	s.Require().Len(deps, 1)
+	s.Equal(r2.Uniq().String(), deps[0].Name)
+
+	for _, dep := range deps {
+		s.NotEqual(r1.Uniq().String(), dep.Name, "release must not depend on itself")
+	}
+}
+
 func (s *ConfigTestSuite) TestConfigInvalidUniq() {
 	r := release.NewConfig()
 	r.NameF = "redis"

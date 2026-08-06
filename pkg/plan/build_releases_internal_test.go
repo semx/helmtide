@@ -259,6 +259,80 @@ func (ts *BuildReleasesTestSuite) TestUnmatchedDependency() {
 	rel2.AssertExpectations(ts.T())
 }
 
+// TestMutualDependencyCycle proves that A -> B, B -> A does not infinitely
+// recurse (stack-overflow) while building releases. Each release is added to the
+// plan exactly once, and the resulting dependency graph is then reported as a
+// loop by the graph cycle detector.
+func (ts *BuildReleasesTestSuite) TestMutualDependencyCycle() {
+	tmpDir := ts.T().TempDir()
+	p := New(filepath.Join(tmpDir, Dir))
+
+	tags := []string{"bla"}
+	u1, _ := uniqname.New("mutuala", "", "")
+	u2, _ := uniqname.New("mutualb", "", "")
+
+	deps1 := []*release.DependsOnReference{{Name: u2.String()}}
+	deps2 := []*release.DependsOnReference{{Name: u1.String()}}
+
+	rel1 := NewMockReleaseConfig(ts.T())
+	rel1.On("Tags").Return(tags)
+	rel1.On("Uniq").Return(u1)
+	rel1.On("DependsOn").Return(deps1)
+	rel1.On("SetDependsOn", deps1).Return()
+
+	rel2 := NewMockReleaseConfig(ts.T())
+	rel2.On("Tags").Return(tags)
+	rel2.On("Uniq").Return(u2)
+	rel2.On("DependsOn").Return(deps2)
+	rel2.On("SetDependsOn", deps2).Return()
+
+	p.SetReleases(rel1, rel2)
+
+	releases, err := p.buildReleases(BuildOptions{Tags: tags, MatchAll: true, EnableDependencies: true})
+	ts.Require().NoError(err)
+	ts.Len(releases, 2)
+	ts.Contains(releases, rel1)
+	ts.Contains(releases, rel2)
+
+	// The cycle is left for the graph builder to detect.
+	_, graphErr := p.body.generateDependencyGraph()
+	ts.Require().Error(graphErr)
+	ts.Contains(graphErr.Error(), "loop detected")
+
+	rel1.AssertExpectations(ts.T())
+	rel2.AssertExpectations(ts.T())
+}
+
+// TestSelfDependencyCycle proves that A -> A does not infinitely recurse.
+func (ts *BuildReleasesTestSuite) TestSelfDependencyCycle() {
+	tmpDir := ts.T().TempDir()
+	p := New(filepath.Join(tmpDir, Dir))
+
+	tags := []string{"bla"}
+	u1, _ := uniqname.New("selfdep", "", "")
+
+	deps := []*release.DependsOnReference{{Name: u1.String()}}
+
+	rel := NewMockReleaseConfig(ts.T())
+	rel.On("Tags").Return(tags)
+	rel.On("Uniq").Return(u1)
+	rel.On("DependsOn").Return(deps)
+	rel.On("SetDependsOn", deps).Return()
+
+	p.SetReleases(rel)
+
+	releases, err := p.buildReleases(BuildOptions{Tags: tags, MatchAll: true, EnableDependencies: true})
+	ts.Require().NoError(err)
+	ts.Len(releases, 1)
+	ts.Contains(releases, rel)
+
+	_, graphErr := p.body.generateDependencyGraph()
+	ts.Require().Error(graphErr)
+	ts.Contains(graphErr.Error(), "loop detected")
+
+	rel.AssertExpectations(ts.T())
+}
+
 func (ts *BuildReleasesTestSuite) TestDisabledDependencies() {
 	tmpDir := ts.T().TempDir()
 	p := New(filepath.Join(tmpDir, Dir))
