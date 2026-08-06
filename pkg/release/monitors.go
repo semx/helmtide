@@ -33,25 +33,60 @@ type MonitorReference struct {
 	Action MonitorFailedAction `yaml:"action" json:"action" jsonschema:"title=Action if monitor fails"`
 }
 
-func (rel *config) NotifyMonitorsFailed(ctx context.Context, mons ...monitor.Config) {
+// monitorActionPriority ranks remediation actions by preference so the choice
+// is fully deterministic and never depends on map/slice iteration order.
+//
+// Precedence (higher number wins): Rollback > Uninstall > None.
+//
+// The SAFER (least destructive) requested action always wins:
+//   - Rollback is reversible and keeps the release, so it is preferred whenever
+//     any failed monitor asks for it.
+//   - Uninstall permanently deletes the release; it is only chosen when no
+//     failed monitor requested a Rollback.
+//   - None is the no-op fallback used when no failed monitor requested an action.
+//
+// This guarantees a release is never randomly deleted instead of rolled back
+// (or vice versa) just because failed monitors were iterated in a different
+// order between runs.
+func monitorActionPriority(action MonitorFailedAction) int {
+	switch action {
+	case MonitorActionRollback:
+		return 2
+	case MonitorActionUninstall:
+		return 1
+	case MonitorActionNone:
+		return 0
+	default:
+		return 0
+	}
+}
+
+// SelectMonitorFailedAction deterministically selects a single remediation
+// action for a release from its monitor references, given the set of failed
+// monitors. When the failed monitors map to different actions the safest one
+// wins (see monitorActionPriority). The result does not depend on the order of
+// refs or failed.
+func SelectMonitorFailedAction(refs []MonitorReference, failed ...monitor.Config) MonitorFailedAction {
 	action := MonitorActionNone
 
-	allMons := rel.Monitors()
-	for _, mon := range mons {
-		for i := range allMons {
-			monRef := allMons[i]
+	for _, mon := range failed {
+		for i := range refs {
+			monRef := refs[i]
 			if mon.Name() != monRef.Name {
 				continue
 			}
 
-			if action != monRef.Action {
-				if action != MonitorActionNone {
-					rel.Logger().Warn("multiple actions to perform found, will use latest one")
-				}
+			if monitorActionPriority(monRef.Action) > monitorActionPriority(action) {
 				action = monRef.Action
 			}
 		}
 	}
+
+	return action
+}
+
+func (rel *config) NotifyMonitorsFailed(ctx context.Context, mons ...monitor.Config) {
+	action := SelectMonitorFailedAction(rel.Monitors(), mons...)
 
 	if action == MonitorActionNone {
 		rel.Logger().Info("no actions will be performed for failed monitors")

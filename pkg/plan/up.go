@@ -106,13 +106,19 @@ func (p *Plan) syncReleases(ctx context.Context) (err error) {
 	monitorsFails := make(map[monitor.Config]error)
 
 	releasesMutex := &sync.Mutex{}
+	// monitorsMutex guards concurrent writes to monitorsFails from the monitor
+	// workers below. Every worker runs in its own goroutine and records its
+	// result into the shared map, so the map must never be touched without
+	// holding this lock. After monitorsWG has been awaited all workers are done
+	// and the map may be read lock-free.
+	monitorsMutex := &sync.Mutex{}
 
 	for range parallelLimit {
 		go p.syncReleasesWorker(ctx, releasesWG, releasesNodesChan, releasesMutex, releasesFails, monitorsLockMap)
 	}
 
 	for _, mon := range p.body.Monitors {
-		go p.monitorsWorker(monitorsCtx, monitorsWG, mon, monitorsFails, monitorsLockMap)
+		go p.monitorsWorker(monitorsCtx, monitorsWG, mon, monitorsMutex, monitorsFails, monitorsLockMap)
 	}
 
 	if err := releasesWG.WaitWithContext(ctx); err != nil {
@@ -200,6 +206,7 @@ func (p *Plan) monitorsWorker(
 	ctx context.Context,
 	wg *parallel.WaitGroup,
 	mon monitor.Config,
+	mu *sync.Mutex,
 	fails map[monitor.Config]error,
 	monitorsLockMap map[string]*parallel.WaitGroup,
 ) {
@@ -215,15 +222,29 @@ func (p *Plan) monitorsWorker(
 	}
 	err := lock.WaitWithContext(ctx)
 	if err != nil {
+		// The wait was canceled (e.g. context canceled). Record the failure and
+		// stop here: proceeding into mon.Run with the already-canceled context
+		// would only produce a second, confusing "monitor failed" error for the
+		// same monitor.
 		l.WithError(err).Error("monitor canceled")
+
+		mu.Lock()
 		fails[mon] = err
+		mu.Unlock()
+
 		wg.ErrChan() <- err
+
+		return
 	}
 
 	err = mon.Run(ctx)
 	if err != nil {
 		l.WithError(err).Error("monitor failed")
+
+		mu.Lock()
 		fails[mon] = err
+		mu.Unlock()
+
 		wg.ErrChan() <- err
 	} else {
 		l.Info("monitor passed")
