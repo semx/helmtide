@@ -70,15 +70,38 @@ func resolvePath(dir string) (string, error) {
 // only genuinely dangerous targets — the filesystem root, a top-level directory
 // (a direct child of root, e.g. /etc reached through a rootlink symlink), the
 // current working directory, and the shared temp root — while leaving ordinary
-// absolute and relative plan dirs (including ../sibling) working. The comparison
-// is done on absolute, symlink-resolved paths on both sides, so a relative
-// TMPDIR cannot slip past either.
+// absolute and relative plan dirs (including ../sibling) working. It also
+// rejects a symlinked final component so a symlink tail is never followed or
+// blindly re-appended into the returned path. The comparison is done on
+// absolute, symlink-resolved paths on both sides, so a relative TMPDIR cannot
+// slip past either.
+//
+// KNOWN LIMITATION (TOCTOU): this is path-based validation. The returned path is
+// resolved at check time, but nothing prevents an attacker who controls a
+// component from swapping a symlink into an ancestor AFTER this returns and
+// BEFORE Export performs the rename/RemoveAll, redirecting the operation.
+// Closing that race fully requires fd-based, symlink-refusing traversal
+// (openat/O_NOFOLLOW), which is out of scope for this fix. We deliberately stop
+// at path-based checks here; callers must treat the plan dir as trusted.
 func unsafePlanDirReason(dir, wd string) (resolved, reason string) {
 	if dir == "" {
 		return "", "path is empty"
 	}
 
-	resolved, err := resolvePath(dir)
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return "", fmt.Sprintf("cannot resolve %q: %v", dir, err)
+	}
+	abs = filepath.Clean(abs)
+
+	// Reject a symlinked final component. Lstat does not follow the last
+	// element, so this catches both live and dangling symlink tails; we must
+	// never rename/RemoveAll through such a redirect nor re-append it unresolved.
+	if info, lerr := os.Lstat(abs); lerr == nil && info.Mode()&os.ModeSymlink != 0 {
+		return "", fmt.Sprintf("refusing to use symlinked plan directory %q", abs)
+	}
+
+	resolved, err = resolvePath(abs)
 	if err != nil {
 		return "", fmt.Sprintf("cannot resolve %q: %v", dir, err)
 	}
@@ -216,6 +239,13 @@ func (p *Plan) Export(ctx context.Context, skipUnchanged bool) error {
 	if err != nil {
 		return err
 	}
+
+	// Pin the whole export to the single validated+resolved path: writes,
+	// stash, and every RemoveAll below all go through dest, so validation and
+	// use can never diverge onto different path strings. (See the TOCTOU note
+	// on unsafePlanDirReason for the residual race this does not close.)
+	p.dir = dest
+	p.fullPath = filepath.Join(dest, File)
 
 	log.Tracef("I am exporting plan to %s", dest)
 

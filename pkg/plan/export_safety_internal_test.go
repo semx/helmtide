@@ -93,6 +93,34 @@ func TestValidatePlanDirResolvesSymlinkedAncestor(t *testing.T) {
 	require.ErrorIs(t, err, ErrUnsafePlanDir)
 }
 
+// TestValidatePlanDirRejectsSymlinkTail proves a symlinked final component
+// (whether dangling or pointing at a real dir) is rejected rather than followed
+// or re-appended unresolved.
+func TestValidatePlanDirRejectsSymlinkTail(t *testing.T) {
+	t.Parallel()
+
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+
+	base := t.TempDir()
+
+	// Dangling symlink tail (target does not exist).
+	dangling := filepath.Join(base, "dangling")
+	require.NoError(t, os.Symlink(filepath.Join(base, "nowhere"), dangling))
+	_, err = validatePlanDir(dangling, wd)
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrUnsafePlanDir)
+
+	// Live symlink tail (points at a real dir).
+	target := filepath.Join(base, "real")
+	require.NoError(t, os.MkdirAll(target, 0o755))
+	live := filepath.Join(base, "live")
+	require.NoError(t, os.Symlink(target, live))
+	_, err = validatePlanDir(live, wd)
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrUnsafePlanDir)
+}
+
 // TestValidatePlanDirRelativeTempDir closes the relative-TMPDIR bypass: when
 // os.TempDir() is relative, both sides must be made absolute+resolved before
 // comparison.
