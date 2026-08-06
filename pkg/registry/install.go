@@ -12,7 +12,7 @@ import (
 // package-global HelmRegistryClient (username/password/authorizer credential) and
 // writes the shared on-disk credentials store. Without serialization concurrent
 // logins race and can leak one registry's credentials into another or corrupt the
-// credentials file. Single-registry behaviour is unchanged (one lock/unlock).
+// credentials file. Single-registry behavior is unchanged (one lock/unlock).
 var loginMu sync.Mutex
 
 func (c *config) Install() error {
