@@ -35,9 +35,15 @@ func (p *Plan) Down(ctx context.Context) (err error) {
 	nodesChan := dependenciesGraph.Run()
 
 	wg := parallel.NewWaitGroup()
-	wg.Add(len(p.body.Releases))
 
+	// Count only nodes that are actually emitted to the channel. Nodes whose
+	// dependency failed are pruned inside the graph (IsReady marks them failed
+	// and runChan drops them) and are never sent here, so they must not be
+	// counted — otherwise the WaitGroup could never reach zero and Wait would
+	// hang forever. Adding one per emitted node keeps the accounting exact:
+	// every counted node is guaranteed to Done() via the goroutine below.
 	for node := range nodesChan {
+		wg.Add(1)
 		go func(ctx context.Context, wg *parallel.WaitGroup, node *dependency.Node[release.Config]) {
 			defer wg.Done()
 			rel := node.Data
@@ -53,7 +59,7 @@ func (p *Plan) Down(ctx context.Context) (err error) {
 		}(ctx, wg, node)
 	}
 
-	err = wg.Wait()
+	err = wg.WaitWithContext(ctx)
 
 	return err
 }
