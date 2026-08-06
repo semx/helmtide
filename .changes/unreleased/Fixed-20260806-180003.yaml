@@ -1,8 +1,0 @@
-kind: Fixed
-body: >-
-    down no longer hangs forever when an uninstall failure strands a dependant:
-    the WaitGroup now counts only emitted nodes and waits with the context
-time: 2026-08-06T18:00:03.000000000+04:00
-custom:
-    Author: semx
-    Issue: ""

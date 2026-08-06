@@ -1,9 +1,0 @@
-kind: CI
-body: >-
-    ci: nightly self-hosted regression job runs the full integration suite
-    (including the internet-dependent chart suites, HELMTIDE_TEST_REMOTE_CHARTS
-    on) against a long-lived cluster, complementing the hermetic hosted CI
-time: 2026-08-06T15:00:00.000000000+04:00
-custom:
-    Author: semx
-    Issue: ""
