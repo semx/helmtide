@@ -1,0 +1,8 @@
+kind: Fixed
+body: >-
+    guard release plan building against dependency cycles so mutual or self
+    dependencies no longer stack-overflow before the graph cycle detector runs
+time: 2026-08-06T18:00:02.000000000+04:00
+custom:
+    Author: semx
+    Issue: ""

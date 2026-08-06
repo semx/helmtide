@@ -217,17 +217,7 @@ func (rel *config) buildAfterUnmarshalDependsOn(allReleases []*config) {
 				newDeps = append(newDeps, dep)
 			}
 		case DependencyTag:
-			for _, r := range allReleases {
-				if !slices.Contains(r.Tags(), dep.Tag) {
-					continue
-				}
-
-				newDep := &DependsOnReference{
-					Name:     r.Uniq().String(),
-					Optional: dep.Optional,
-				}
-				newDeps = append(newDeps, newDep)
-			}
+			newDeps = append(newDeps, rel.dependenciesForTag(dep, allReleases)...)
 		case DependencyInvalid:
 			l.Warn("invalid dependency, skipping")
 		}
@@ -236,6 +226,30 @@ func (rel *config) buildAfterUnmarshalDependsOn(allReleases []*config) {
 	rel.lock.Lock()
 	rel.DependsOnF = newDeps
 	rel.lock.Unlock()
+}
+
+// dependenciesForTag expands a tag dependency into concrete release references,
+// excluding the release itself — a self-dependency via a shared tag would form a
+// trivial cycle.
+func (rel *config) dependenciesForTag(dep *DependsOnReference, allReleases []*config) []*DependsOnReference {
+	deps := make([]*DependsOnReference, 0)
+
+	for _, r := range allReleases {
+		if !slices.Contains(r.Tags(), dep.Tag) {
+			continue
+		}
+
+		if r.Uniq().Equal(rel.Uniq()) {
+			continue
+		}
+
+		deps = append(deps, &DependsOnReference{
+			Name:     r.Uniq().String(),
+			Optional: dep.Optional,
+		})
+	}
+
+	return deps
 }
 
 // buildAfterUnmarshalDependency generates full uniqname for dependency if it was short using release as default.
