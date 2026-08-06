@@ -3,10 +3,12 @@ package tests
 import (
 	"context"
 	"errors"
+	"net"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
+	"time"
 )
 
 var ErrTestTimeout = errors.New("tests timeout exceeded")
@@ -104,6 +106,24 @@ func RequireRemoteCharts(t *testing.T) {
 	if _, ok := os.LookupEnv(RemoteChartsEnv); !ok {
 		t.Skipf("needs public chart repos: set %s=1 to run this", RemoteChartsEnv)
 	}
+}
+
+// RequireLocalPrometheus skips a test whose monitors query Prometheus at
+// localhost:9090 unless something is actually listening there. Fixture 20 pins
+// that address, which only answers when the test host can reach the deployed
+// Prometheus over localhost -- true when the suite runs on the cluster node (a
+// local kind cluster, or with a port-forward), false in a split runner/cluster
+// topology where the cluster lives on another host. Rather than fail on the
+// topology, skip with a reason; the hermetic prometheus monitor coverage in
+// pkg/action already exercises the real client against an in-process stub.
+func RequireLocalPrometheus(t *testing.T) {
+	t.Helper()
+
+	conn, err := net.DialTimeout("tcp", "127.0.0.1:9090", 500*time.Millisecond)
+	if err != nil {
+		t.Skipf("needs a Prometheus reachable at localhost:9090 (fixture 20 pins it): %v", err)
+	}
+	_ = conn.Close()
 }
 
 func GetContext(t *testing.T) context.Context {
