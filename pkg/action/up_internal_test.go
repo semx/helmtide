@@ -70,6 +70,7 @@ func (ts *UpTestSuite) TestAutoBuild() {
 func (ts *UpTestSuite) TestPrometheusMonitors() {
 	tests.RequireCluster(ts.T())
 	tests.RequireRemoteCharts(ts.T())
+	tests.RequireLocalPrometheus(ts.T())
 
 	tmpDir := ts.T().TempDir()
 	y := &Yml{
