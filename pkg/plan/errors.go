@@ -19,4 +19,9 @@ var (
 
 	// ErrDeploy is returned when deploy is failed for whatever reason.
 	ErrDeploy = errors.New("deploy failed")
+
+	// ErrUnsafePlanDir is returned when the plan directory resolves to a path
+	// that must never be wiped on export (empty, ".", "..", the filesystem
+	// root, the current working directory or the shared temp root).
+	ErrUnsafePlanDir = errors.New("unsafe plan directory")
 )

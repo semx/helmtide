@@ -17,6 +17,10 @@ type BuildOptions struct {
 
 // Build plan with yml and tags/matchALL options.
 func (p *Plan) Build(ctx context.Context, o BuildOptions) (err error) {
+	if p.initErr != nil {
+		return p.initErr
+	}
+
 	p.templater = o.Templater
 
 	// Create Body

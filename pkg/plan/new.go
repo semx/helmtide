@@ -57,6 +57,11 @@ type Plan struct {
 	graphMD   string
 	templater string
 
+	// initErr is set when New failed to allocate a private temporary
+	// directory. It makes the plan unusable so the failure surfaces on
+	// Build/Export instead of silently aliasing tmpDir to the shared temp root.
+	initErr error
+
 	manifests map[uniqname.UniqName]string
 	unchanged release.Configs
 }
@@ -134,18 +139,25 @@ func NewBody(_ context.Context, file string, validate bool) (*planBody, error) {
 
 // New returns empty *Plan for provided directory.
 func New(dir string) *Plan {
-	tmpDir, err := os.MkdirTemp("", "")
-	if err != nil {
-		log.WithError(err).Warn("failed to create temporary directory")
-		tmpDir = os.TempDir()
-	}
-
 	plan := &Plan{
-		tmpDir:    tmpDir,
 		dir:       dir,
 		fullPath:  filepath.Join(dir, File),
 		manifests: make(map[uniqname.UniqName]string),
 	}
+
+	tmpDir, err := os.MkdirTemp("", "")
+	if err != nil {
+		// Do NOT fall back to os.TempDir(). tmpDir is passed to os.RemoveAll
+		// on export, so aliasing it to the shared temp root would recursively
+		// delete the system temp directory. Leave tmpDir empty and mark the
+		// plan unusable so the error surfaces on Build/Export instead.
+		log.WithError(err).Error("failed to create temporary directory")
+		plan.initErr = fmt.Errorf("failed to create temporary directory: %w", err)
+
+		return plan
+	}
+
+	plan.tmpDir = tmpDir
 
 	return plan
 }
