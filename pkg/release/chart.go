@@ -117,7 +117,7 @@ func (rel *config) LocateChartWithCache() (string, error) {
 
 	ch, err := rel.findChartInHelmCache()
 	if err == nil {
-		rel.Logger().WithField("path", ch).Info("❎ found chart in helm cache, using it")
+		rel.Logger().WithField("path", ch).Info("found chart in helm cache, using it")
 
 		return ch, nil
 	}
@@ -297,7 +297,7 @@ func (rel *config) chartCheck(ch *chart.Chart) error {
 	}
 
 	if ch.Metadata.Deprecated {
-		rel.Logger().Warnf("⚠️ Chart %s is deprecated. Please update your chart.", ch.Name())
+		rel.Logger().Warnf("chart %s is deprecated, please update your chart", ch.Name())
 	}
 
 	return nil
@@ -305,13 +305,13 @@ func (rel *config) chartCheck(ch *chart.Chart) error {
 
 func (rel *config) ChartDepsUpd() error {
 	if rel.Chart().IsRemote() {
-		rel.Logger().Info("❎ skipping updating dependencies for remote chart")
+		rel.Logger().Info("skipping updating dependencies for remote chart")
 
 		return nil
 	}
 
 	if rel.Chart().SkipDependencyUpdate {
-		rel.Logger().Info("❎ forced skipping updating dependencies for local chart")
+		rel.Logger().Info("forced skipping updating dependencies for local chart")
 
 		return nil
 	}
@@ -344,7 +344,7 @@ func (rel *config) ChartDepsUpd() error {
 
 func (rel *config) DownloadChart(tmpDir string) error {
 	if !rel.Chart().IsRemote() {
-		rel.Logger().Info("❎ chart is local, skipping exporting")
+		rel.Logger().Info("chart is local, skipping exporting")
 
 		return nil
 	}

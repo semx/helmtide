@@ -46,7 +46,7 @@ type CommandNotFoundError struct {
 }
 
 func (e CommandNotFoundError) Error() string {
-	return fmt.Sprintf("👻 Command %q not found", e.Command)
+	return fmt.Sprintf("command %q not found", e.Command)
 }
 
 func command404(_ *cli.Context, s string) {

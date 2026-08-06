@@ -13,12 +13,12 @@ var Version = "dev"
 // validate compares helmwave versions.
 func validate(a, b string) bool {
 	if a != b {
-		log.Warnf("⚠️ yaml version is %s but binary version is %s", a, b)
+		log.Warnf("yaml version is %s but binary version is %s", a, b)
 
 		return false
 	}
 
-	log.Debug("✅ yaml version is equal to binary version")
+	log.Debug("yaml version is equal to binary version")
 
 	return true
 }

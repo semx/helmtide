@@ -44,7 +44,7 @@ func (rel *config) upgrade(ctx context.Context) (*release.Release, error) {
 
 		return r, nil
 	} else if !rel.dryRun && !rel.isInstalled() {
-		rel.Logger().Debug("🧐 Release does not exist. Installing it now.")
+		rel.Logger().Debug("release does not exist, installing it now")
 		r, err := rel.installWithRetry(ctx, ch, vals)
 		if err != nil {
 			return nil, fmt.Errorf("failed to install %q: %w", rel.Uniq(), err)
@@ -116,7 +116,7 @@ func (rel *config) upgradeWithRetry(
 }
 
 func (rel *config) forceOfflineKubeVersion() error {
-	rel.Logger().Warn("🤔hmm, it looks like some required CRDs are not installed, setting offline_kube_version and trying again")
+	rel.Logger().Warn("some required CRDs are not installed, setting offline_kube_version and trying again")
 
 	v, err := helper.GetKubernetesVersion(rel.Cfg())
 	if err != nil {

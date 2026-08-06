@@ -35,7 +35,7 @@ func (i *Up) Run(ctx context.Context) error {
 		return err
 	}
 
-	p.Logger().Info("🏗 Plan")
+	p.Logger().Info("plan ready")
 
 	return p.Up(ctx, i.dog)
 }
@@ -59,7 +59,7 @@ func (i *Up) Cmd() *cli.Command {
 	return &cli.Command{
 		Name:     "up",
 		Category: Step2,
-		Usage:    "🚢 apply your plan",
+		Usage:    "apply your plan",
 		Flags:    i.flags(),
 		Action:   toCtx(i.Run),
 	}

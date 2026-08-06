@@ -89,7 +89,7 @@ func (p *Plan) build(ctx context.Context, o BuildOptions) (err error) {
 	}
 
 	if o.GraphWidth != 1 {
-		log.Info("🔨 Building graphs...")
+		log.Info("building graphs")
 		p.graphMD = buildGraphMD(p.body.Releases)
 		log.Infof("show graph:\n%s", p.BuildGraphASCII(o.GraphWidth))
 	}

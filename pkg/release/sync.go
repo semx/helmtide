@@ -46,7 +46,7 @@ func (rel *config) Sync(ctx context.Context, runHooks bool) (r *release.Release,
 	}
 
 	if !rel.HideNotes {
-		rel.Logger().Infof("🗒️ release notes:\n%s", r.Info.Notes)
+		rel.Logger().Infof("release notes:\n%s", r.Info.Notes)
 	}
 
 	return r, nil

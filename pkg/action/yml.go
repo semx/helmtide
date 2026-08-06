@@ -26,7 +26,7 @@ func (i *Yml) Run(ctx context.Context) error {
 	log.WithField(
 		"build plan with next command",
 		"helmwave build -f "+i.file,
-	).Info("📄 YML is ready!")
+	).Info("yml is ready")
 
 	return nil
 }
@@ -36,7 +36,7 @@ func (i *Yml) Cmd() *cli.Command {
 	return &cli.Command{
 		Name: "yml",
 		// Category: Step0,
-		Usage:  "📄 render helmwave.yml.tpl -> helmwave.yml",
+		Usage:  "render helmwave.yml.tpl -> helmwave.yml",
 		Flags:  i.flags(),
 		Action: toCtx(i.Run),
 	}

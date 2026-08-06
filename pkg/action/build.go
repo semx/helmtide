@@ -73,7 +73,7 @@ func (i *Build) Run(ctx context.Context) (err error) {
 	}
 
 	// Show current plan
-	newPlan.Logger().Info("🏗 Plan")
+	newPlan.Logger().Info("plan ready")
 
 	// Diff
 	err = i.diffing(ctx, newPlan)
@@ -87,7 +87,7 @@ func (i *Build) Run(ctx context.Context) (err error) {
 		return err
 	}
 
-	log.Info("🏗 Planfile is ready!")
+	log.Info("plan file is ready")
 
 	return nil
 }
@@ -97,7 +97,7 @@ func (i *Build) Cmd() *cli.Command {
 	return &cli.Command{
 		Name:     "build",
 		Category: Step1,
-		Usage:    "🏗 build a plan",
+		Usage:    "build a plan",
 		Flags:    i.flags(),
 		Before: func(q *cli.Context) error {
 			i.diff.FixFields()
@@ -210,7 +210,7 @@ func (i *Build) diffing(ctx context.Context, p *plan.Plan) error {
 	case DiffModeLocal:
 		oldPlan := plan.New(i.plandir)
 		if oldPlan.IsExist() {
-			log.Info("🆚 Diff with previous local plan")
+			log.Info("diffing with previous local plan")
 			if err := oldPlan.Import(ctx); err != nil {
 				return err
 			}
@@ -218,12 +218,12 @@ func (i *Build) diffing(ctx context.Context, p *plan.Plan) error {
 			p.DiffPlan(oldPlan, i.diff.Options)
 		}
 	case DiffModeLive:
-		log.Info("🆚 Diff manifests in the kubernetes cluster")
+		log.Info("diffing manifests in the kubernetes cluster")
 		p.DiffLive(ctx, i.diff.Options, i.diff.ThreeWayMerge)
 	case DiffModeNone:
-		log.Info("🆚 Skip diffing")
+		log.Info("skipping diff")
 	default:
-		log.Warnf("🆚❔Unknown %q diff mode, skipping", i.diffMode)
+		log.Warnf("unknown %q diff mode, skipping", i.diffMode)
 	}
 
 	return nil

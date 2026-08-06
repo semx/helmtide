@@ -19,7 +19,7 @@ func (c *config) Install(_ context.Context, settings *helm.EnvSettings, f *repo.
 		}
 
 		// The add is idempotent so do nothing
-		c.Logger().Info("❎ repository already exists with the same configuration, skipping")
+		c.Logger().Info("repository already exists with the same configuration, skipping")
 
 		return nil
 	}
@@ -35,7 +35,7 @@ func (c *config) Install(_ context.Context, settings *helm.EnvSettings, f *repo.
 	c.Logger().Debugf("Download IndexFile for %q", chartRepo.Config.Name)
 	_, err = chartRepo.DownloadIndexFile()
 	if err != nil {
-		c.Logger().WithError(err).Warnf("⚠️ looks like %q is not a valid chart repository or can't be reached", c.URL())
+		c.Logger().WithError(err).Warnf("%q is not a valid chart repository or can't be reached", c.URL())
 	}
 
 	f.Update(&c.Entry)

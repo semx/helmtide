@@ -36,7 +36,7 @@ func (d *DiffLive) Run(ctx context.Context) error {
 func (d *DiffLive) Cmd() *cli.Command {
 	return &cli.Command{
 		Name:   "live",
-		Usage:  "plan 🆚 live",
+		Usage:  "diff plan against live",
 		Flags:  d.flags(),
 		Action: toCtx(d.Run),
 	}
