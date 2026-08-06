@@ -1,0 +1,6 @@
+kind: Fixed
+body: serialize concurrent helm registry logins to prevent credential mixing and shared credentials-store corruption
+time: 2026-08-06T18:00:05.000000000+04:00
+custom:
+    Author: semx
+    Issue: ""
