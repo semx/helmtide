@@ -19,7 +19,7 @@ type Graph struct {
 // Run is the main function for 'status' command.
 func (l *Graph) Run(ctx context.Context) error {
 	if 1 == l.build.options.GraphWidth {
-		log.Info("🔺it is not possible to turn off the graph in this command")
+		log.Info("it is not possible to turn off the graph in this command")
 
 		return nil
 	}

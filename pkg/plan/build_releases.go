@@ -9,7 +9,7 @@ import (
 )
 
 func (p *Plan) buildReleases(o BuildOptions) ([]release.Config, error) {
-	log.Info("🔨 Building releases...")
+	log.Info("building releases")
 
 	plan := make([]release.Config, 0)
 

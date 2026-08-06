@@ -14,7 +14,7 @@ import (
 //
 //nolint:wrapcheck // the release logs enough context of its own
 func (p *Plan) buildReleaseChart(rel release.Config) error {
-	rel.Logger().Info("🔨 Building chart...")
+	rel.Logger().Info("building chart")
 
 	return rel.DownloadChart(p.tmpDir)
 }

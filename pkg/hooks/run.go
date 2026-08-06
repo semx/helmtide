@@ -37,7 +37,7 @@ func (h *hook) Run(ctx context.Context) error {
 func (h *hook) run(ctx context.Context) error {
 	cmd := exec.CommandContext(ctx, h.Cmd, h.Args...)
 
-	const t = "🩼 running hook..."
+	const t = "running hook"
 
 	switch h.Show {
 	case true:
@@ -87,7 +87,7 @@ func (l *Lifecycle) RunPreBuild(ctx context.Context) error {
 	ctx = helper.ContextWithLifecycleType(ctx, "pre-build")
 
 	if len(l.PreBuild) != 0 {
-		log.Info("🩼 Running pre-build hooks...")
+		log.Info("running pre-build hooks")
 
 		return runHooks(ctx, l.PreBuild)
 	}
@@ -99,7 +99,7 @@ func (l *Lifecycle) RunPostBuild(ctx context.Context) error {
 	ctx = helper.ContextWithLifecycleType(ctx, "post-build")
 
 	if len(l.PostBuild) != 0 {
-		log.Info("🩼 Running post-build hooks...")
+		log.Info("running post-build hooks")
 
 		return runHooks(ctx, l.PostBuild)
 	}
@@ -113,7 +113,7 @@ func (l *Lifecycle) RunPreUp(ctx context.Context) error {
 	ctx = helper.ContextWithLifecycleType(ctx, "pre-up")
 
 	if len(l.PreUp) != 0 {
-		log.Info("🩼 Running pre-up hooks...")
+		log.Info("running pre-up hooks")
 
 		return runHooks(ctx, l.PreUp)
 	}
@@ -125,7 +125,7 @@ func (l *Lifecycle) RunPostUp(ctx context.Context) error {
 	ctx = helper.ContextWithLifecycleType(ctx, "post-up")
 
 	if len(l.PostUp) != 0 {
-		log.Info("🩼 Running post-up hooks...")
+		log.Info("running post-up hooks")
 
 		return runHooks(ctx, l.PostUp)
 	}
@@ -139,7 +139,7 @@ func (l *Lifecycle) RunPreDown(ctx context.Context) error {
 	ctx = helper.ContextWithLifecycleType(ctx, "pre-down")
 
 	if len(l.PreDown) != 0 {
-		log.Info("🩼 Running pre-down hooks...")
+		log.Info("running pre-down hooks")
 
 		return runHooks(ctx, l.PreDown)
 	}
@@ -151,7 +151,7 @@ func (l *Lifecycle) RunPostDown(ctx context.Context) error {
 	ctx = helper.ContextWithLifecycleType(ctx, "post-down")
 
 	if len(l.PostDown) != 0 {
-		log.Info("🩼 Running post-down hooks...")
+		log.Info("running post-down hooks")
 
 		return runHooks(ctx, l.PostDown)
 	}
@@ -165,7 +165,7 @@ func (l *Lifecycle) RunPreRollback(ctx context.Context) error {
 	ctx = helper.ContextWithLifecycleType(ctx, "pre-rollback")
 
 	if len(l.PreRollback) != 0 {
-		log.Info("🩼 Running pre-rollback hooks...")
+		log.Info("running pre-rollback hooks")
 
 		return runHooks(ctx, l.PreRollback)
 	}
@@ -177,7 +177,7 @@ func (l *Lifecycle) RunPostRollback(ctx context.Context) error {
 	ctx = helper.ContextWithLifecycleType(ctx, "post-rollback")
 
 	if len(l.PostRollback) != 0 {
-		log.Info("🩼 Running post-rollback hooks...")
+		log.Info("running post-rollback hooks")
 
 		return runHooks(ctx, l.PostRollback)
 	}

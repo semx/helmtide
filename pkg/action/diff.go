@@ -33,7 +33,7 @@ func (d *Diff) Cmd() *cli.Command {
 	return &cli.Command{
 		Name:     "diff",
 		Category: Step1,
-		Usage:    "🆚 show differences",
+		Usage:    "show differences",
 		Aliases:  []string{"vs"},
 		Flags:    d.flags(),
 		Before: func(q *cli.Context) error {

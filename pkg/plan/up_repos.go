@@ -19,7 +19,7 @@ func (p *Plan) syncRepositories(ctx context.Context) error {
 
 // SyncRepositories initializes helm repository.yaml file with flock and installs provided repositories.
 func SyncRepositories(ctx context.Context, repositories repo.Configs) error {
-	log.Trace("🗄 helm repository.yaml: ", helper.Helm.RepositoryConfig)
+	log.Trace("helm repository.yaml: ", helper.Helm.RepositoryConfig)
 
 	// Create if not exists
 	if !helper.IsExists(helper.Helm.RepositoryConfig) {

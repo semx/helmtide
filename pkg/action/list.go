@@ -36,7 +36,7 @@ func (l *List) Cmd() *cli.Command {
 		Name:     "list",
 		Category: Step2,
 		Aliases:  []string{"ls"},
-		Usage:    "👀 list of deployed releases",
+		Usage:    "list of deployed releases",
 		Flags:    l.flags(),
 		Action:   toCtx(l.Run),
 	}

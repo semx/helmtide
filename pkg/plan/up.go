@@ -40,13 +40,13 @@ func (p *Plan) Up(ctx context.Context, dog *kubedog.Config) (err error) {
 		}
 	}()
 
-	log.Info("🗄 sync repositories...")
+	log.Info("syncing repositories")
 	err = p.syncRepositories(ctx)
 	if err != nil {
 		return
 	}
 
-	log.Info("🗄 sync registries...")
+	log.Info("syncing registries")
 	err = p.syncRegistries(ctx)
 	if err != nil {
 		return
@@ -56,10 +56,10 @@ func (p *Plan) Up(ctx context.Context, dog *kubedog.Config) (err error) {
 		return
 	}
 
-	log.Info("🛥 sync releases...")
+	log.Info("syncing releases")
 
 	if dog.Enabled {
-		log.Warn("🐶 kubedog is enabled")
+		log.Warn("kubedog is enabled")
 		kubedog.FixLog(ctx, dog.LogWidth)
 		err = p.syncReleasesKubedog(ctx, dog)
 	} else {
@@ -164,10 +164,10 @@ func (p *Plan) syncRelease(
 
 	l := rel.Logger()
 
-	l.Info("🛥 deploying... ")
+	l.Info("deploying release")
 
 	if _, err := rel.Sync(ctx, true); err != nil {
-		l.WithError(err).Error("❌ failed to deploy")
+		l.WithError(err).Error("failed to deploy release")
 
 		if rel.AllowFailure() {
 			l.Errorf("release is allowed to fail, marked as succeeded to dependencies")
@@ -183,7 +183,7 @@ func (p *Plan) syncRelease(
 		wg.ErrChan() <- err
 	} else {
 		node.SetSucceeded()
-		l.Info("✅")
+		l.Info("release deployed")
 
 		allMons := rel.Monitors()
 		for i := range allMons {
@@ -215,18 +215,18 @@ func (p *Plan) monitorsWorker(
 	}
 	err := lock.WaitWithContext(ctx)
 	if err != nil {
-		l.WithError(err).Error("❌ monitor canceled")
+		l.WithError(err).Error("monitor canceled")
 		fails[mon] = err
 		wg.ErrChan() <- err
 	}
 
 	err = mon.Run(ctx)
 	if err != nil {
-		l.WithError(err).Error("❌ monitor failed")
+		l.WithError(err).Error("monitor failed")
 		fails[mon] = err
 		wg.ErrChan() <- err
 	} else {
-		l.Info("✅")
+		l.Info("monitor passed")
 	}
 }
 

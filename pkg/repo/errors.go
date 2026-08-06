@@ -43,5 +43,5 @@ func NewNotFoundError(name string) error {
 }
 
 func (err NotFoundError) Error() string {
-	return fmt.Sprint("🗄 repository not found: ", err.Name)
+	return fmt.Sprint("repository not found: ", err.Name)
 }

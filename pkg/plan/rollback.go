@@ -34,7 +34,7 @@ func (p *Plan) Rollback(ctx context.Context, version int, dog *kubedog.Config) (
 	}()
 
 	if dog.Enabled {
-		log.Warn("🐶 kubedog is enabled")
+		log.Warn("kubedog is enabled")
 		kubedog.FixLog(ctx, dog.LogWidth)
 		err = p.rollbackReleasesKubedog(ctx, version, dog)
 	} else {
@@ -53,10 +53,10 @@ func (p *Plan) rollbackReleases(ctx context.Context, version int) error {
 			defer wg.Done()
 			err := rel.Rollback(ctx, version)
 			if err != nil {
-				rel.Logger().WithError(err).Error("❌ rollback")
+				rel.Logger().WithError(err).Error("failed to rollback release")
 				wg.ErrChan() <- err
 			} else {
-				rel.Logger().Info("✅ rollback!")
+				rel.Logger().Info("release rolled back")
 			}
 		}(wg, p.body.Releases[i])
 	}

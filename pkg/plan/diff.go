@@ -47,7 +47,7 @@ func (p *Plan) DiffPlan(b *Plan, opts *diff.Options) {
 		change := diff.Manifests(oldSpecs, newSpecs, opts, log.StandardLogger().Out)
 		if !change {
 			k++
-			log.Info("🆚 ❎ ", rel.Uniq(), " no changes")
+			log.Info(rel.Uniq(), " no changes")
 			p.unchanged = append(p.unchanged, rel)
 		}
 	}
@@ -84,7 +84,7 @@ func (p *Plan) DiffLive(ctx context.Context, opts *diff.Options, threeWayMerge b
 
 			if !change && !chartChange {
 				k++
-				rel.Logger().Info("🆚 ❎ no changes")
+				rel.Logger().Info("no changes")
 				p.unchanged = append(p.unchanged, rel)
 			}
 		}
@@ -200,7 +200,7 @@ func diffCharts(ctx context.Context, oldChart *chart.Chart, rel release.Config, 
 
 	for i := range changelog {
 		change := changelog[i]
-		l.WithField("path", strings.Join(change.Path, ".")).Infof("🆚 %q -> %q", change.From, change.To)
+		l.WithField("path", strings.Join(change.Path, ".")).Infof("changed %q -> %q", change.From, change.To)
 	}
 
 	return true
@@ -249,11 +249,11 @@ func showChangesReport(releases []release.Config, visited map[uniqname.UniqName]
 		}
 
 		previous = true
-		rel.Logger().Warn("🆚 release was found in previous plan but not affected in new")
+		rel.Logger().Warn("release was found in previous plan but not affected in new")
 	}
 
 	if k == len(releases) && !previous {
-		log.Info("🆚 🌝 Plan has no changes")
+		log.Info("plan has no changes")
 	}
 }
 

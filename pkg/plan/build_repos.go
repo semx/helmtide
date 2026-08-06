@@ -10,7 +10,7 @@ import (
 )
 
 func (p *Plan) buildRepositories() (out []repo.Config, err error) {
-	log.Info("🔨 Building repositories...")
+	log.Info("building repositories")
 
 	return buildRepositories(
 		buildRepoMapTop(p.body.Releases),
@@ -23,15 +23,15 @@ func buildRepositories(m map[string][]release.Config, in []repo.Config) (out []r
 		rm := releaseNames(releases)
 
 		l := log.WithField("repository", rep)
-		l.WithField("releases", rm).Debug("🗄 found releases that depend on repository")
+		l.WithField("releases", rm).Debug("found releases that depend on repository")
 
 		if index, found := repo.IndexOfName(in, rep); found {
 			out = append(out, in[index])
-			l.Info("🗄 repo has been added to the plan")
+			l.Info("repository has been added to the plan")
 		} else if repoIsLocal(rep) {
-			l.Info("🗄 it is local repo")
+			l.Info("this is a local repository")
 		} else {
-			l.WithField("releases", rm).Warn("🗄 some releases depend on repository that is not defined")
+			l.WithField("releases", rm).Warn("some releases depend on a repository that is not defined")
 
 			return nil, repo.NewNotFoundError(rep)
 		}

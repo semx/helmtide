@@ -20,7 +20,7 @@ func (p *Plan) ValidateValuesImport() error {
 			_, err := os.Stat(y)
 			if os.IsNotExist(err) {
 				f = true
-				rel.Logger().Errorf("❌ values %q", rel.Values()[i].Src)
+				rel.Logger().Errorf("values not found %q", rel.Values()[i].Src)
 			} else if err != nil {
 				f = true
 				rel.Logger().WithError(err).Errorf("failed to open values %s", y)

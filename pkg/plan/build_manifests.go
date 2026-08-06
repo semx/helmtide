@@ -13,7 +13,7 @@ import (
 )
 
 func (p *Plan) buildManifest(ctx context.Context) error {
-	log.Info("🔨 Building manifests...")
+	log.Info("building manifests")
 
 	wg, ctx := errgroup.WithContext(ctx)
 	wg.SetLimit(p.ParallelLimiter(ctx))
@@ -60,12 +60,12 @@ func (p *Plan) buildReleaseManifest(ctx context.Context, rel release.Config, mu 
 	}
 
 	if err := rel.ChartDepsUpd(); err != nil {
-		l.WithError(err).Warn("❌ can't get dependencies")
+		l.WithError(err).Warn("can't get dependencies")
 	}
 
 	r, err := rel.SyncDryRun(ctx, false)
 	if err != nil || r == nil {
-		l.Errorf("❌ can't get manifests: %v", err)
+		l.Errorf("can't get manifests: %v", err)
 
 		return err
 	}
@@ -88,7 +88,7 @@ func (p *Plan) buildReleaseManifest(ctx context.Context, rel release.Config, mu 
 	p.manifests[rel.Uniq()] = document
 	mu.Unlock()
 
-	l.Info("✅  manifest done")
+	l.Info("manifest done")
 
 	return nil
 }

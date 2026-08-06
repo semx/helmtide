@@ -15,7 +15,7 @@ func buildRegistriesMapTop(releases []release.Config) map[string][]release.Confi
 		}
 
 		m[rel.Repo()] = append(m[rel.Repo()], rel)
-		rel.Logger().Debug("🗄 This chart will download via OCI")
+		rel.Logger().Debug("this chart will be downloaded via OCI")
 	}
 
 	return m
@@ -26,13 +26,13 @@ func buildRegistries(m map[string][]release.Config, in []regi.Config) (out []reg
 		rm := releaseNames(releases)
 
 		l := log.WithField("registry", reg)
-		l.WithField("releases", rm).Debug("🗄 found releases that depend on registries")
+		l.WithField("releases", rm).Debug("found releases that depend on registries")
 
 		if index, found := regi.IndexOfHost(in, reg); found {
 			out = append(out, in[index])
-			l.Info("🗄 registry has been added to the plan")
+			l.Info("registry has been added to the plan")
 		} else {
-			l.WithField("releases", rm).Warn("🗄 some releases depend on a registry that is not defined")
+			l.WithField("releases", rm).Warn("some releases depend on a registry that is not defined")
 
 			return nil, regi.NewNotFoundError(reg)
 		}
@@ -42,7 +42,7 @@ func buildRegistries(m map[string][]release.Config, in []regi.Config) (out []reg
 }
 
 func (p *Plan) buildRegistries() (out []regi.Config, err error) {
-	log.Info("🔨 Building registries...")
+	log.Info("building registries")
 
 	return buildRegistries(
 		buildRegistriesMapTop(p.body.Releases),

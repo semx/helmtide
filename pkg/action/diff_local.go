@@ -52,7 +52,7 @@ func (d *DiffLocal) Cmd() *cli.Command {
 	return &cli.Command{
 		Name:    "local",
 		Aliases: []string{"plan"},
-		Usage:   "plan1  🆚  plan2",
+		Usage:   "diff plan1 against plan2",
 		Flags:   d.flags(),
 		Action:  toCtx(d.Run),
 	}

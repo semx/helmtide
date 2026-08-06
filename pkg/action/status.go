@@ -36,7 +36,7 @@ func (l *Status) Cmd() *cli.Command {
 	return &cli.Command{
 		Name:     "status",
 		Category: Step2,
-		Usage:    "👁️status of deployed releases",
+		Usage:    "status of deployed releases",
 		Flags:    l.flags(),
 		Action:   toCtx(l.Run),
 	}

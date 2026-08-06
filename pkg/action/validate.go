@@ -29,7 +29,7 @@ func (l *Validate) Cmd() *cli.Command {
 	return &cli.Command{
 		Name:     "validate",
 		Category: Step1,
-		Usage:    "🛂 validate your plan",
+		Usage:    "validate your plan",
 		Flags:    l.flags(),
 		Action:   toCtx(l.Run),
 	}

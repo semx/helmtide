@@ -10,7 +10,7 @@ import (
 )
 
 func (p *Plan) buildValues(ctx context.Context) error {
-	log.Info("🔨 Building values...")
+	log.Info("building values")
 	if err := p.ValidateValuesBuild(); err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func (p *Plan) buildValues(ctx context.Context) error {
 func (p *Plan) buildReleaseValues(ctx context.Context, rel release.Config) error {
 	err := rel.BuildValues(ctx, p.tmpDir, p.templater)
 	if err != nil {
-		log.Errorf("❌ %s values: %v", rel.Uniq(), err)
+		log.Errorf("failed to build %s values: %v", rel.Uniq(), err)
 
 		return err
 	} else {
@@ -40,9 +40,9 @@ func (p *Plan) buildReleaseValues(ctx context.Context, rel release.Config) error
 		})
 
 		if len(vals) == 0 {
-			rel.Logger().Info("🔨 no values provided")
+			rel.Logger().Info("no values provided")
 		} else {
-			log.WithField("release", rel.Uniq()).WithField("values", vals).Infof("✅ found %d values count", len(vals))
+			log.WithField("release", rel.Uniq()).WithField("values", vals).Infof("found %d values", len(vals))
 		}
 	}
 

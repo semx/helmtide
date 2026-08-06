@@ -28,7 +28,7 @@ func NewNotFoundError(host string) error {
 }
 
 func (err NotFoundError) Error() string {
-	return fmt.Sprintf("🗄 registry not found: %s", err.Host)
+	return fmt.Sprintf("registry not found: %s", err.Host)
 }
 
 type LoginError struct {
