@@ -270,35 +270,7 @@ func (p *Plan) Export(ctx context.Context, skipUnchanged bool) error {
 		p.Logger().Info("removed unchanged releases from plan")
 	}
 
-	wg := parallel.NewWaitGroup()
-	wg.Add(4)
-
-	go func() {
-		defer wg.Done()
-		if err := p.exportCharts(); err != nil {
-			wg.ErrChan() <- err
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if err := p.exportManifest(); err != nil {
-			wg.ErrChan() <- err
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if err := p.exportValues(); err != nil {
-			wg.ErrChan() <- err
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if err := p.exportGraphMD(); err != nil {
-			wg.ErrChan() <- err
-		}
-	}()
-
-	if err := wg.Wait(); err != nil {
+	if err := p.exportArtifacts(); err != nil {
 		return fail(err)
 	}
 
@@ -315,6 +287,26 @@ func (p *Plan) Export(ctx context.Context, skipUnchanged bool) error {
 	}
 
 	return nil
+}
+
+// exportArtifacts runs the per-artifact exporters concurrently and returns the
+// first error, if any.
+func (p *Plan) exportArtifacts() error {
+	exporters := []func() error{p.exportCharts, p.exportManifest, p.exportValues, p.exportGraphMD}
+
+	wg := parallel.NewWaitGroup()
+	wg.Add(len(exporters))
+
+	for _, export := range exporters {
+		go func() {
+			defer wg.Done()
+			if err := export(); err != nil {
+				wg.ErrChan() <- err
+			}
+		}()
+	}
+
+	return wg.Wait()
 }
 
 func (p *Plan) removeUnchanged() {
