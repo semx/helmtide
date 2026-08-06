@@ -2,7 +2,9 @@ package plan
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -14,63 +16,120 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// validatePlanDir resolves dir to an absolute path and rejects locations that
-// must never be recursively deleted on export. wd is the current working
-// directory (passed in so it can be exercised deterministically in tests).
-func validatePlanDir(dir, wd string) (string, error) {
-	if dir == "" {
-		return "", fmt.Errorf("%w: path is empty", ErrUnsafePlanDir)
-	}
+// isRoot reports whether p is a filesystem root (for a root filepath.Dir(p) == p).
+func isRoot(p string) bool {
+	return p == filepath.Dir(p)
+}
 
-	if clean := filepath.Clean(dir); clean == "." || clean == ".." {
-		return "", fmt.Errorf("%w: refusing to use %q", ErrUnsafePlanDir, clean)
-	}
-
+// resolvePath returns an absolute, symlink-free form of dir. The final target
+// may not exist yet, so we resolve symlinks in the deepest existing ancestor
+// and re-append the not-yet-existing tail. This defeats lexical bypasses where
+// a symlinked ancestor (e.g. rootlink -> /) hides the real target.
+func resolvePath(dir string) (string, error) {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
-		return "", fmt.Errorf("%w: cannot resolve %q: %w", ErrUnsafePlanDir, dir, err)
+		return "", err
 	}
 	abs = filepath.Clean(abs)
 
-	// Filesystem root: for the root path filepath.Dir(root) == root.
-	if abs == filepath.Dir(abs) {
-		return "", fmt.Errorf("%w: refusing to use filesystem root %q", ErrUnsafePlanDir, abs)
-	}
+	remainder := ""
+	cur := abs
 
-	if wd != "" && abs == filepath.Clean(wd) {
-		return "", fmt.Errorf("%w: refusing to use the current working directory %q", ErrUnsafePlanDir, abs)
-	}
+	for {
+		resolved, err := filepath.EvalSymlinks(cur)
+		if err == nil {
+			if remainder == "" {
+				return resolved, nil
+			}
 
-	if abs == filepath.Clean(os.TempDir()) {
-		return "", fmt.Errorf("%w: refusing to use the shared temp root %q", ErrUnsafePlanDir, abs)
-	}
+			return filepath.Join(resolved, remainder), nil
+		}
 
-	return abs, nil
+		// A missing component just means we keep walking up; anything else
+		// (permission, not-a-directory, ...) is a real error.
+		if !errors.Is(err, fs.ErrNotExist) {
+			return "", err
+		}
+
+		parent := filepath.Dir(cur)
+		if parent == cur { // reached root without an existing ancestor
+			if remainder == "" {
+				return cur, nil
+			}
+
+			return filepath.Join(cur, remainder), nil
+		}
+
+		remainder = filepath.Join(filepath.Base(cur), remainder)
+		cur = parent
+	}
 }
 
-// isSafeToRemove reports whether dir may be handed to os.RemoveAll. It guards
-// against wiping an empty path, the filesystem root or the shared temp root
-// (e.g. if tmpDir allocation ever leaves a dangerous value).
+// unsafePlanDirReason resolves dir (following symlinks) and returns a non-empty
+// reason when the resolved target must never be recursively deleted. It rejects
+// only genuinely dangerous targets — the filesystem root, a top-level directory
+// (a direct child of root, e.g. /etc reached through a rootlink symlink), the
+// current working directory, and the shared temp root — while leaving ordinary
+// absolute and relative plan dirs (including ../sibling) working. The comparison
+// is done on absolute, symlink-resolved paths on both sides, so a relative
+// TMPDIR cannot slip past either.
+func unsafePlanDirReason(dir, wd string) (resolved, reason string) {
+	if dir == "" {
+		return "", "path is empty"
+	}
+
+	resolved, err := resolvePath(dir)
+	if err != nil {
+		return "", fmt.Sprintf("cannot resolve %q: %v", dir, err)
+	}
+
+	if isRoot(resolved) {
+		return "", fmt.Sprintf("refusing to use filesystem root %q", resolved)
+	}
+
+	if isRoot(filepath.Dir(resolved)) {
+		return "", fmt.Sprintf("refusing to use top-level directory %q (resolved from %q)", resolved, dir)
+	}
+
+	if wd != "" {
+		if rwd, err := resolvePath(wd); err == nil && resolved == rwd {
+			return "", fmt.Sprintf("refusing to use the current working directory %q", resolved)
+		}
+	}
+
+	if rtmp, err := resolvePath(os.TempDir()); err == nil && resolved == rtmp {
+		return "", fmt.Sprintf("refusing to use the shared temp root %q", resolved)
+	}
+
+	return resolved, ""
+}
+
+// validatePlanDir resolves dir (following symlinks) to an absolute path and
+// rejects locations that must never be recursively deleted on export. wd is the
+// current working directory (passed in so it can be exercised deterministically
+// in tests).
+func validatePlanDir(dir, wd string) (string, error) {
+	resolved, reason := unsafePlanDirReason(dir, wd)
+	if reason != "" {
+		return "", fmt.Errorf("%w: %s", ErrUnsafePlanDir, reason)
+	}
+
+	return resolved, nil
+}
+
+// isSafeToRemove reports whether dir may be handed to os.RemoveAll. It applies
+// the same symlink-resolved, absolute checks as validatePlanDir so that neither
+// the private tmp dir nor a partial-output path is ever removed when its
+// resolved form is dangerous (empty, root, top-level, cwd or temp root).
 func isSafeToRemove(dir string) bool {
 	if dir == "" {
 		return false
 	}
 
-	abs, err := filepath.Abs(dir)
-	if err != nil {
-		return false
-	}
-	abs = filepath.Clean(abs)
+	wd, _ := os.Getwd()
+	_, reason := unsafePlanDirReason(dir, wd)
 
-	if abs == filepath.Dir(abs) { // filesystem root
-		return false
-	}
-
-	if abs == filepath.Clean(os.TempDir()) {
-		return false
-	}
-
-	return true
+	return reason == ""
 }
 
 // cleanTmpDir removes the plan's private temporary directory, but never an
@@ -109,6 +168,39 @@ func stashDir(dir string) (string, error) {
 	return placeholder, nil
 }
 
+// restorePlan undoes a failed export. It removes the half-written new plan at
+// dest and, when a previous plan was stashed at backup, moves it back. It never
+// swallows errors: if the old plan cannot be put back it is left intact at
+// backup and a loud error naming that path is returned, so the operator can
+// always recover manually and is never left with neither plan.
+func restorePlan(dest, backup string, cause error) error {
+	if backup == "" {
+		// There was no previous plan to protect; best-effort clean the partial
+		// output but still surface any failure.
+		if rmErr := os.RemoveAll(dest); rmErr != nil {
+			return errors.Join(cause, fmt.Errorf("failed to remove incomplete plan at %s: %w", dest, rmErr))
+		}
+
+		return cause
+	}
+
+	if rmErr := os.RemoveAll(dest); rmErr != nil {
+		return errors.Join(cause, fmt.Errorf(
+			"PREVIOUS PLAN PRESERVED at %s: could not remove incomplete plan %s to restore it: %w; restore manually with: mv %q %q",
+			backup, dest, rmErr, backup, dest,
+		))
+	}
+
+	if rErr := os.Rename(backup, dest); rErr != nil {
+		return errors.Join(cause, fmt.Errorf(
+			"PREVIOUS PLAN PRESERVED at %s: could not move it back to %s: %w; restore manually with: mv %q %q",
+			backup, dest, rErr, backup, dest,
+		))
+	}
+
+	return cause
+}
+
 // Export allows save plan to file.
 func (p *Plan) Export(ctx context.Context, skipUnchanged bool) error {
 	if p.initErr != nil {
@@ -140,16 +232,7 @@ func (p *Plan) Export(ctx context.Context, skipUnchanged bool) error {
 	}
 
 	fail := func(cause error) error {
-		if rmErr := os.RemoveAll(dest); rmErr != nil {
-			p.Logger().WithError(rmErr).Error("failed to remove incomplete plan")
-		}
-		if backup != "" {
-			if rErr := os.Rename(backup, dest); rErr != nil {
-				return fmt.Errorf("%w (also failed to restore previous plan from %s: %v)", cause, backup, rErr)
-			}
-		}
-
-		return cause
+		return restorePlan(dest, backup, cause)
 	}
 
 	if skipUnchanged {
