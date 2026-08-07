@@ -9,8 +9,16 @@ func (c *config) Validate() error {
 		return ErrLowTotalTimeout
 	}
 
-	if c.Interval == 0 {
+	if c.Interval <= 0 {
 		return ErrLowInterval
+	}
+
+	if c.SuccessThreshold < 1 {
+		return ErrLowSuccessThreshold
+	}
+
+	if c.FailureThreshold < 1 {
+		return ErrLowFailureThreshold
 	}
 
 	err := c.subConfig.Validate()

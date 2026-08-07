@@ -1,0 +1,8 @@
+kind: Fixed
+body: >-
+    reject non-positive monitor intervals and sub-one success/failure thresholds,
+    and actually apply the prometheus monitor insecure flag to the client TLS config
+time: 2026-08-07T10:00:03.000000000+04:00
+custom:
+    Author: semx
+    Issue: ""
