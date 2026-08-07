@@ -219,7 +219,9 @@ func (i *Build) diffing(ctx context.Context, p *plan.Plan) error {
 		}
 	case DiffModeLive:
 		log.Info("diffing manifests in the kubernetes cluster")
-		p.DiffLive(ctx, i.diff.Options, i.diff.ThreeWayMerge)
+		if _, err := p.DiffLive(ctx, i.diff.Options, i.diff.ThreeWayMerge); err != nil {
+			return err
+		}
 	case DiffModeNone:
 		log.Info("skipping diff")
 	default:

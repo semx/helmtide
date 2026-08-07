@@ -32,8 +32,23 @@ type Diff struct {
 
 	// DetailedExitcode makes the diff subcommands exit with DiffDetailedExitcode
 	// when differences are found (and 0 when there are none), like
-	// `helm diff --detailed-exitcode`.
+	// `helm diff --detailed-exitcode`. It is bound to the flag on the parent
+	// `diff` command so it works before the subcommand (`diff --detailed-exitcode
+	// live`).
 	DetailedExitcode bool
+
+	// detailedExitcodeSub is bound to the copy of the flag on each subcommand so
+	// it also works after the subcommand (`diff live --detailed-exitcode`). It is
+	// a separate destination on purpose: a shared one would let the subcommand's
+	// default (false) overwrite a value already set on the parent. wantDetailedExitcode
+	// ORs the two.
+	detailedExitcodeSub bool
+}
+
+// wantDetailedExitcode reports whether --detailed-exitcode was requested, no
+// matter which side of the subcommand it was placed on.
+func (d *Diff) wantDetailedExitcode() bool {
+	return d.DetailedExitcode || d.detailedExitcodeSub
 }
 
 // detailedExitcodeErr returns a cli.ExitCoder with DiffDetailedExitcode when the

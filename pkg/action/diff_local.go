@@ -44,7 +44,7 @@ func (d *DiffLocal) Run(ctx context.Context) error {
 
 	changed := plan1.DiffPlan(plan2, d.diff.Options)
 
-	return detailedExitcodeErr(d.diff.DetailedExitcode, changed)
+	return detailedExitcodeErr(d.diff.wantDetailedExitcode(), changed)
 }
 
 // Cmd returns 'diff plan' *cli.Command.
@@ -75,6 +75,6 @@ func (d *DiffLocal) flags() []cli.Flag {
 			EnvVars:     EnvVars("PLANDIR_2"),
 			Destination: &d.plandir2,
 		},
-		flagDiffDetailedExitcode(&d.diff.DetailedExitcode),
+		flagDiffDetailedExitcode(&d.diff.detailedExitcodeSub),
 	}
 }
