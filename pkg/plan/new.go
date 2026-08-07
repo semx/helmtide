@@ -3,9 +3,11 @@ package plan
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/semx/helmtide/pkg/release/dependency"
 
@@ -121,9 +123,7 @@ func NewBody(_ context.Context, file string, validate bool) (*planBody, error) {
 		return b, fmt.Errorf("failed to read plan file %s: %w", file, err)
 	}
 
-	decoder := yaml.NewDecoder(bytes.NewBuffer(src))
-	err = decoder.Decode(b)
-	if err != nil {
+	if err := unmarshalPlanBody(src, b); err != nil {
 		return b, fmt.Errorf("failed to unmarshal YAML plan %s: %w", file, err)
 	}
 
@@ -135,6 +135,95 @@ func NewBody(_ context.Context, file string, validate bool) (*planBody, error) {
 	}
 
 	return b, nil
+}
+
+// unmarshalPlanBody decodes the main plan config into b with strict
+// (known-fields) checking, so a misspelled key (e.g. `namesapce` instead of
+// `namespace`) fails loudly instead of silently falling back to defaults.
+//
+// The one accepted exception is the YAML-anchor idiom inherited from helmwave:
+// reusable option blocks are defined under a top-level holder key whose name
+// starts with "." or "x-" (e.g. `.default:` / `x-options:`) and merged into
+// releases with `<<: *anchor`. Those holder keys are not real config and are
+// ignored; every other unknown field, at any nesting level, is rejected.
+//
+// Strictness is applied only to the top-level plan/release config decoded here.
+// Per-release user values files may have any shape and are decoded elsewhere
+// without this option.
+func unmarshalPlanBody(src []byte, b *planBody) error {
+	decoder := yaml.NewDecoder(bytes.NewBuffer(src))
+	decoder.KnownFields(true)
+
+	err := decoder.Decode(b)
+	if err == nil {
+		return nil
+	}
+
+	// If the only complaints are top-level anchor-holder keys, they are
+	// intentional and we re-decode without strict checking. Any other unknown
+	// field is a real typo and is surfaced verbatim (it names the field, its
+	// type and the line), which is exactly the actionable error we want.
+	var typeErr *yaml.TypeError
+	if errors.As(err, &typeErr) {
+		if real := realUnknownFieldErrors(typeErr.Errors); len(real) > 0 {
+			return fmt.Errorf("unknown field(s): %s", strings.Join(real, "; "))
+		}
+
+		// Only anchor holders were flagged: re-decode leniently so the anchors
+		// resolve and the plan populates. Reaching here guarantees there are no
+		// other unknown fields, so no strictness is lost.
+		*b = planBody{Version: version.Version}
+
+		if lerr := yaml.Unmarshal(src, b); lerr != nil {
+			return lerr
+		}
+
+		return nil
+	}
+
+	return err
+}
+
+// realUnknownFieldErrors keeps only the yaml unknown-field errors that point at
+// a genuine typo, dropping the ones caused by a top-level anchor-holder key
+// (name starting with "." or "x-") on the plan body.
+func realUnknownFieldErrors(errs []string) []string {
+	var real []string
+
+	for _, e := range errs {
+		if isIgnorableAnchorHolderError(e) {
+			continue
+		}
+
+		real = append(real, e)
+	}
+
+	return real
+}
+
+// isIgnorableAnchorHolderError reports whether a yaml "field X not found"
+// message refers to a top-level anchor-holder key on planBody. The yaml.v3
+// message format is: "line N: field <key> not found in type <type>".
+func isIgnorableAnchorHolderError(msg string) bool {
+	// Only top-level keys (on planBody itself) may be anchor holders; unknown
+	// fields on nested types are always treated as typos.
+	if !strings.Contains(msg, "not found in type plan.planBody") {
+		return false
+	}
+
+	const prefix = "field "
+
+	i := strings.Index(msg, prefix)
+	if i < 0 {
+		return false
+	}
+
+	name := msg[i+len(prefix):]
+	if j := strings.Index(name, " not found"); j >= 0 {
+		name = name[:j]
+	}
+
+	return strings.HasPrefix(name, ".") || strings.HasPrefix(name, "x-")
 }
 
 // New returns empty *Plan for provided directory.

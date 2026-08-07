@@ -1,0 +1,6 @@
+kind: New feature
+body: reject unknown fields in the plan config so a misspelled key errors instead of being silently ignored
+time: 2026-08-07T10:00:02.000000000+04:00
+custom:
+    Author: semx
+    Issue: ""
