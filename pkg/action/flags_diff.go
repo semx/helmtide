@@ -1,6 +1,10 @@
 package action
 
-import "github.com/urfave/cli/v2"
+import (
+	"strconv"
+
+	"github.com/urfave/cli/v2"
+)
 
 // flagDiffMode pass val to urfave flag.
 func flagDiffMode(v *string) cli.Flag {
@@ -34,6 +38,18 @@ func flagDiffShowSecret(v *bool) cli.Flag {
 		Category:    "DIFF",
 		Usage:       "show secret in diff",
 		EnvVars:     EnvVars("DIFF_SHOW_SECRET"),
+		Destination: v,
+	}
+}
+
+// flagDiffDetailedExitcode pass val to urfave flag.
+func flagDiffDetailedExitcode(v *bool) cli.Flag {
+	return &cli.BoolFlag{
+		Name:        "detailed-exitcode",
+		Usage:       "return a non-zero exit code (" + strconv.Itoa(DiffDetailedExitcode) + ") when differences are found",
+		Value:       false,
+		Category:    "DIFF",
+		EnvVars:     EnvVars("DIFF_DETAILED_EXITCODE"),
 		Destination: v,
 	}
 }

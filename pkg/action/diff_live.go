@@ -27,9 +27,15 @@ func (d *DiffLive) Run(ctx context.Context) error {
 		return os.ErrNotExist
 	}
 
-	p.DiffLive(ctx, d.diff.Options, d.diff.ThreeWayMerge)
+	// When --detailed-exitcode is requested the exit code must be trustworthy, so
+	// a genuine 3-way-merge failure has to surface as an error (exit 1) rather than
+	// be swallowed with a fallback to the stored manifest.
+	changed, err := p.DiffLive(ctx, d.diff.Options, d.diff.ThreeWayMerge, d.diff.wantDetailedExitcode())
+	if err != nil {
+		return err
+	}
 
-	return nil
+	return detailedExitcodeErr(d.diff.wantDetailedExitcode(), changed)
 }
 
 // Cmd returns 'diff live' *cli.Command.
@@ -47,5 +53,6 @@ func (d *DiffLive) flags() []cli.Flag {
 	return []cli.Flag{
 		flagPlandir(&d.plandir),
 		flagDiffThreeWayMerge(&d.diff.ThreeWayMerge),
+		flagDiffDetailedExitcode(&d.diff.detailedExitcodeSub),
 	}
 }

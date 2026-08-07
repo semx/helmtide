@@ -2,6 +2,8 @@ package plan
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"reflect"
 	"slices"
 	"strings"
@@ -29,12 +31,17 @@ var SkippedAnnotations = map[string][]string{
 }
 
 // DiffPlan show diff between 2 plans.
-func (p *Plan) DiffPlan(b *Plan, opts *diff.Options) {
+// It returns true when at least one difference was found between the plans,
+// including releases that were added to or removed from the plan.
+func (p *Plan) DiffPlan(b *Plan, opts *diff.Options) bool {
 	visited := make(map[uniqname.UniqName]bool)
-	k := 0
+	changed := false
 
 	log.WithField("suppress", opts.SuppressedKinds).Debug("suppress kinds for diffing")
 
+	// Concat walks releases from both plans, so a release that exists only in the
+	// old plan (a removal) or only in the new plan (an addition) is diffed against
+	// an empty side and reported as a change.
 	for _, rel := range slices.Concat(p.body.Releases, b.body.Releases) {
 		if visited[rel.Uniq()] {
 			continue
@@ -44,70 +51,131 @@ func (p *Plan) DiffPlan(b *Plan, opts *diff.Options) {
 		oldSpecs := parseManifests(b.manifests[rel.Uniq()], rel.Namespace())
 		newSpecs := parseManifests(p.manifests[rel.Uniq()], rel.Namespace())
 
-		change := diff.Manifests(oldSpecs, newSpecs, opts, log.StandardLogger().Out)
-		if !change {
-			k++
+		if diff.Manifests(oldSpecs, newSpecs, opts, log.StandardLogger().Out) {
+			changed = true
+		} else {
 			log.Info(rel.Uniq(), " no changes")
 			p.unchanged = append(p.unchanged, rel)
 		}
 	}
 
-	showChangesReport(p.body.Releases, visited, k)
+	if !changed {
+		log.Info("plan has no changes")
+	}
+
+	return changed
 }
 
 // DiffLive show diff with production releases in k8s-cluster.
-func (p *Plan) DiffLive(ctx context.Context, opts *diff.Options, threeWayMerge bool) {
+// It returns true when at least one difference was found against the cluster,
+// including releases that are not deployed yet and would be installed. A genuine
+// failure to read the cluster or to render a release is returned as an error so
+// that callers can tell a real failure apart from a detected change.
+//
+// strictErrors controls the 3-way-merge path: when it is true (the caller wants a
+// trustworthy exit code, e.g. --detailed-exitcode) a genuine cluster failure while
+// building the merge is returned as an error instead of silently falling back to
+// the stored manifest. When it is false the historical lenient warn+fallback is
+// kept so existing users are unaffected.
+func (p *Plan) DiffLive(ctx context.Context, opts *diff.Options, threeWayMerge, strictErrors bool) (bool, error) {
 	alive, _, err := p.GetLive(ctx)
 	if err != nil {
-		log.Fatalf("Something went wrong with getting releases in the kubernetes cluster: %v", err)
+		return false, fmt.Errorf("failed to get releases from the kubernetes cluster: %w", err)
 	}
 
-	visited := make(map[uniqname.UniqName]bool, len(p.body.Releases))
-	k := 0
+	changed := false
 
 	for _, rel := range p.body.Releases {
-		visited[rel.Uniq()] = true
+		relChanged, err := p.diffLiveRelease(ctx, rel, alive, opts, threeWayMerge, strictErrors)
+		if err != nil {
+			return false, err
+		}
 
-		if active, ok := alive[rel.Uniq()]; ok {
-			newManifest := p.manifests[rel.Uniq()]
-			oldManifest := active.Manifest
-			if threeWayMerge {
-				oldManifest = get3WayMergeManifests(rel, active.Manifest)
-			}
-			// I don't use manifest.ParseRelease
-			// Because Structs are different.
-			oldSpecs := parseManifests(oldManifest, rel.Namespace())
-			newSpecs := parseManifests(newManifest, rel.Namespace())
-
-			change := diff.Manifests(oldSpecs, newSpecs, opts, rel.Logger().Logger.Out)
-			chartChange := diffCharts(ctx, active.Chart, rel, rel.Logger())
-
-			if !change && !chartChange {
-				k++
-				rel.Logger().Info("no changes")
-				p.unchanged = append(p.unchanged, rel)
-			}
+		if relChanged {
+			changed = true
 		}
 	}
 
-	showChangesReport(p.body.Releases, visited, k)
+	if !changed {
+		log.Info("plan has no changes")
+	}
+
+	return changed, nil
 }
 
-func get3WayMergeManifests(rel release.Config, oldManifest string) string { //nolint:gocognit
+// diffLiveRelease reports whether a single release differs from its live cluster
+// state. A genuine cluster/RBAC/3-way error is returned (so the caller can exit
+// non-zero); a release absent from the cluster counts as a change (it would be
+// installed).
+func (p *Plan) diffLiveRelease(
+	ctx context.Context,
+	rel release.Config,
+	alive map[uniqname.UniqName]*live.Release,
+	opts *diff.Options,
+	threeWayMerge, strictErrors bool,
+) (bool, error) {
+	active, ok := alive[rel.Uniq()]
+	if !ok {
+		// Not on the cluster yet, so applying the plan would install it.
+		rel.Logger().Info("release is not deployed yet, it would be installed")
+
+		return true, nil
+	}
+
+	oldManifest := active.Manifest
+	if threeWayMerge {
+		merged, err := get3WayMergeManifests(rel, active.Manifest)
+		if err != nil {
+			if strictErrors {
+				return false, err
+			}
+
+			rel.Logger().WithError(err).Warn("3-way merge failed, falling back to the stored manifest")
+		}
+
+		oldManifest = merged
+	}
+
+	// I don't use manifest.ParseRelease
+	// Because Structs are different.
+	oldSpecs := parseManifests(oldManifest, rel.Namespace())
+	newSpecs := parseManifests(p.manifests[rel.Uniq()], rel.Namespace())
+
+	manifestChange := diff.Manifests(oldSpecs, newSpecs, opts, rel.Logger().Logger.Out)
+
+	chartChange, err := diffCharts(ctx, active.Chart, rel, rel.Logger())
+	if err != nil {
+		return false, err
+	}
+
+	if manifestChange || chartChange {
+		return true, nil
+	}
+
+	rel.Logger().Info("no changes")
+	p.unchanged = append(p.unchanged, rel)
+
+	return false, nil
+}
+
+// get3WayMergeManifests folds the live cluster state into the old manifest for a
+// 3-way merge diff. It returns the merged manifest and a non-nil error only on a
+// genuine failure (cluster unreachable, RBAC forbidden, network, ...). A resource
+// that is legitimately absent from the cluster is not an error: it is simply
+// skipped. On error it returns the untouched oldManifest so a lenient caller can
+// still fall back to it. The returned error must NOT be dropped when the caller
+// wants a trustworthy exit code.
+func get3WayMergeManifests(rel release.Config, oldManifest string) (string, error) { //nolint:gocognit
 	cfg := rel.Cfg()
 
 	err := cfg.KubeClient.IsReachable()
 	if err != nil {
-		rel.Logger().WithError(err).Warn("failed to connect to k8s to run 3-way merge, skipping")
-
-		return oldManifest
+		return oldManifest, fmt.Errorf("failed to connect to k8s to run 3-way merge: %w", err)
 	}
 
 	oldResources, err := cfg.KubeClient.Build(strings.NewReader(oldManifest), false)
 	if err != nil {
-		rel.Logger().WithError(err).Warn("failed to build old resources list for 3-way merge, skipping")
-
-		return oldManifest
+		return oldManifest, fmt.Errorf("failed to build old resources list for 3-way merge: %w", err)
 	}
 
 	updatedManifest := ""
@@ -162,12 +230,10 @@ func get3WayMergeManifests(rel release.Config, oldManifest string) string { //no
 		return nil
 	})
 	if err != nil {
-		rel.Logger().WithError(err).Warn("failed to get latest objects for 3-way merge, skipping")
-
-		return oldManifest
+		return oldManifest, fmt.Errorf("failed to get latest objects for 3-way merge: %w", err)
 	}
 
-	return updatedManifest
+	return updatedManifest, nil
 }
 
 //nolint:gocritic // cannot change argument types as it is required by diff library
@@ -175,27 +241,26 @@ func diffChartsFilter(path []string, _ reflect.Type, _ reflect.StructField) bool
 	return len(path) >= 1 && path[0] == "Metadata"
 }
 
-func diffCharts(ctx context.Context, oldChart *chart.Chart, rel release.Config, l log.FieldLogger) bool {
+// diffCharts reports whether the chart metadata changed. A dry-run render or a
+// diff failure is returned as an error instead of being swallowed, so a real
+// rendering problem is not silently reported as "no change".
+func diffCharts(ctx context.Context, oldChart *chart.Chart, rel release.Config, l log.FieldLogger) (bool, error) {
 	l.Info("getting charts diff")
 
 	dryRunRelease, err := rel.SyncDryRun(ctx, false)
 	if err != nil {
-		l.WithError(err).Error("failed to get dry-run release")
-
-		return false
+		return false, fmt.Errorf("failed to get dry-run release for %s: %w", rel.Uniq(), err)
 	}
 
 	newChart := dryRunRelease.Chart
 
 	changelog, err := structDiff.Diff(oldChart, newChart, structDiff.Filter(diffChartsFilter))
 	if err != nil {
-		l.WithError(err).Error("failed to get diff of charts")
-
-		return false
+		return false, fmt.Errorf("failed to diff charts for %s: %w", rel.Uniq(), err)
 	}
 
 	if len(changelog) == 0 {
-		return false
+		return false, nil
 	}
 
 	for i := range changelog {
@@ -203,7 +268,7 @@ func diffCharts(ctx context.Context, oldChart *chart.Chart, rel release.Config, 
 		l.WithField("path", strings.Join(change.Path, ".")).Infof("changed %q -> %q", change.From, change.To)
 	}
 
-	return true
+	return true, nil
 }
 
 func parseManifests(m, ns string) map[string]*manifest.MappingResult {
@@ -240,24 +305,12 @@ func parseManifests(m, ns string) map[string]*manifest.MappingResult {
 	return manifests
 }
 
-// showChangesReport help function for reporting helm-diff.
-func showChangesReport(releases []release.Config, visited map[uniqname.UniqName]bool, k int) {
-	previous := false
-	for _, rel := range releases {
-		if visited[rel.Uniq()] {
-			continue
-		}
-
-		previous = true
-		rel.Logger().Warn("release was found in previous plan but not affected in new")
-	}
-
-	if k == len(releases) && !previous {
-		log.Info("plan has no changes")
-	}
-}
-
 // GetLive returns maps of releases in a k8s-cluster.
+//
+// A release that is simply absent from the cluster (driver.ErrReleaseNotFound)
+// is reported via notFound, not as an error: the caller treats it as a release
+// that would be installed. Any other lookup failure (RBAC, network, ...) is a
+// genuine error and is returned so it is not misreported as a missing release.
 func (p *Plan) GetLive(
 	ctx context.Context,
 ) (found map[uniqname.UniqName]*live.Release, notFound []uniqname.UniqName, err error) {
@@ -266,6 +319,8 @@ func (p *Plan) GetLive(
 
 	found = make(map[uniqname.UniqName]*live.Release)
 	mu := &sync.Mutex{}
+
+	var getErrs []error
 
 	for i := range p.body.Releases {
 		go func(wg *parallel.WaitGroup, mu *sync.Mutex, rel release.Config) {
@@ -276,19 +331,27 @@ func (p *Plan) GetLive(
 			mu.Lock()
 			defer mu.Unlock()
 
-			if err != nil {
-				log.Warnf("I can't get release from k8s: %v", err)
-				//nolint:revive // we are under mutex here
-				notFound = append(notFound, rel.Uniq())
-			} else {
+			switch {
+			case err == nil:
 				//nolint:revive // we are under mutex here
 				found[rel.Uniq()] = r
+			case errors.Is(err, release.ErrNotFound):
+				//nolint:revive // we are under mutex here
+				notFound = append(notFound, rel.Uniq())
+			default:
+				log.Warnf("failed to get release %s from k8s: %v", rel.Uniq(), err)
+				//nolint:revive // we are under mutex here
+				getErrs = append(getErrs, err)
 			}
 		}(wg, mu, p.body.Releases[i])
 	}
 
 	if err := wg.WaitWithContext(ctx); err != nil {
 		return nil, nil, err
+	}
+
+	if len(getErrs) > 0 {
+		return nil, nil, errors.Join(getErrs...)
 	}
 
 	return found, notFound, nil

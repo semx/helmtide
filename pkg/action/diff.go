@@ -15,14 +15,52 @@ const (
 
 	// DiffModeNone is a subcommand name for skipping diffing.
 	DiffModeNone = "none"
+
+	// DiffDetailedExitcode is the exit code returned by the diff command when
+	// --detailed-exitcode is enabled and differences were found. It mirrors the
+	// convention used by `terraform plan -detailed-exitcode` and
+	// `helm diff --detailed-exitcode`.
+	DiffDetailedExitcode = 2
 )
 
 // Diff is a struct for running 'diff' commands.
 type Diff struct {
 	*diff.Options
 	kindSuppressHelper cli.StringSlice
-	ThreeWayMerge      bool // maybe it should move to DiffLive?
 	findRenamesHelper  float64
+	ThreeWayMerge      bool // maybe it should move to DiffLive?
+
+	// DetailedExitcode makes the diff subcommands exit with DiffDetailedExitcode
+	// when differences are found (and 0 when there are none), like
+	// `helm diff --detailed-exitcode`. It is bound to the flag on the parent
+	// `diff` command so it works before the subcommand (`diff --detailed-exitcode
+	// live`).
+	DetailedExitcode bool
+
+	// detailedExitcodeSub is bound to the copy of the flag on each subcommand so
+	// it also works after the subcommand (`diff live --detailed-exitcode`). It is
+	// a separate destination on purpose: a shared one would let the subcommand's
+	// default (false) overwrite a value already set on the parent. wantDetailedExitcode
+	// ORs the two.
+	detailedExitcodeSub bool
+}
+
+// wantDetailedExitcode reports whether --detailed-exitcode was requested, no
+// matter which side of the subcommand it was placed on.
+func (d *Diff) wantDetailedExitcode() bool {
+	return d.DetailedExitcode || d.detailedExitcodeSub
+}
+
+// detailedExitcodeErr returns a cli.ExitCoder with DiffDetailedExitcode when the
+// --detailed-exitcode flag is enabled and the diff found changes. It returns nil
+// otherwise, keeping the default behavior (exit 0) intact. Real diff failures are
+// handled separately by returning their own error, so they still exit with 1.
+func detailedExitcodeErr(enabled, changed bool) error {
+	if enabled && changed {
+		return cli.Exit("", DiffDetailedExitcode)
+	}
+
+	return nil
 }
 
 // Cmd returns 'diff' *cli.Command.
@@ -56,6 +94,7 @@ func (d *Diff) flags() []cli.Flag {
 		flagDiffWide(&d.OutputContext),
 		flagDiffShowSecret(&d.ShowSecrets),
 		flagDiffThreeWayMerge(&d.ThreeWayMerge),
+		flagDiffDetailedExitcode(&d.DetailedExitcode),
 		&cli.BoolFlag{
 			Name:        "strip-trailing-cr",
 			Usage:       "strip trailing carriage return on input",
