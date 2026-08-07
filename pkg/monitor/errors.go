@@ -12,7 +12,11 @@ var (
 
 	ErrLowTotalTimeout = errors.New("total timeout is less than iteration timeout")
 
-	ErrLowInterval = errors.New("interval cannot be zero")
+	ErrLowInterval = errors.New("interval must be greater than zero")
+
+	ErrLowSuccessThreshold = errors.New("success_threshold must be at least 1")
+
+	ErrLowFailureThreshold = errors.New("failure_threshold must be at least 1")
 )
 
 type InitError struct {

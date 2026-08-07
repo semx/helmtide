@@ -2,6 +2,9 @@ package prometheus
 
 import (
 	"context"
+	"crypto/tls"
+	"net"
+	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/api"
@@ -39,8 +42,28 @@ func NewConfig() *Config {
 	return &Config{}
 }
 
+// newRoundTripper builds an HTTP RoundTripper for the Prometheus client,
+// mirroring api.DefaultRoundTripper but honouring the insecure flag so that
+// TLS certificate verification can be skipped when requested.
+func newRoundTripper(insecure bool) *http.Transport {
+	return &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		TLSHandshakeTimeout: 10 * time.Second,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: insecure,
+		},
+	}
+}
+
 func (c *Config) Init(_ context.Context, logger *log.Entry) error {
-	client, err := api.NewClient(api.Config{Address: c.URL})
+	client, err := api.NewClient(api.Config{
+		Address:      c.URL,
+		RoundTripper: newRoundTripper(c.Insecure),
+	})
 	if err != nil {
 		return NewPrometheusClientError(err)
 	}
