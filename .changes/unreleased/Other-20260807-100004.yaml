@@ -1,5 +1,8 @@
 kind: Other
-body: Rebrand user-facing help, command examples, log messages and default plandir/filenames from helmwave to helmtide while keeping helmwave.yml and HELMWAVE_* backward compatibility
+body: >-
+    rebrand user-facing help, command examples, log messages and default
+    plandir/filenames from helmwave to helmtide, while keeping helmwave.yml
+    and HELMWAVE_* backward compatibility
 time: 2026-08-07T10:00:04.000000000+04:00
 custom:
     Author: semx
