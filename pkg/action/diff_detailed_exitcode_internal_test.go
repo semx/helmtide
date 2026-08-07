@@ -107,6 +107,9 @@ func TestDetailedExitcodeFlagParsesInBothPositions(t *testing.T) {
 	beforeLive := run("diff", "--detailed-exitcode", "live", "--plandir", "/no/such")
 	require.True(t, beforeLive.wantDetailedExitcode(), "flag before the live subcommand must be honored")
 
+	afterLive := run("diff", "live", "--plandir", "/no/such", "--detailed-exitcode")
+	require.True(t, afterLive.wantDetailedExitcode(), "flag after the live subcommand must be honored")
+
 	unset := run(append([]string{"diff", "local"}, badLocal...)...)
 	require.False(t, unset.wantDetailedExitcode(), "flag must default to off")
 }

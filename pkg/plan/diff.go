@@ -71,7 +71,13 @@ func (p *Plan) DiffPlan(b *Plan, opts *diff.Options) bool {
 // including releases that are not deployed yet and would be installed. A genuine
 // failure to read the cluster or to render a release is returned as an error so
 // that callers can tell a real failure apart from a detected change.
-func (p *Plan) DiffLive(ctx context.Context, opts *diff.Options, threeWayMerge bool) (bool, error) {
+//
+// strictErrors controls the 3-way-merge path: when it is true (the caller wants a
+// trustworthy exit code, e.g. --detailed-exitcode) a genuine cluster failure while
+// building the merge is returned as an error instead of silently falling back to
+// the stored manifest. When it is false the historical lenient warn+fallback is
+// kept so existing users are unaffected.
+func (p *Plan) DiffLive(ctx context.Context, opts *diff.Options, threeWayMerge, strictErrors bool) (bool, error) {
 	alive, _, err := p.GetLive(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get releases from the kubernetes cluster: %w", err)
@@ -93,7 +99,16 @@ func (p *Plan) DiffLive(ctx context.Context, opts *diff.Options, threeWayMerge b
 		newManifest := p.manifests[rel.Uniq()]
 		oldManifest := active.Manifest
 		if threeWayMerge {
-			oldManifest = get3WayMergeManifests(rel, active.Manifest)
+			merged, err := get3WayMergeManifests(rel, active.Manifest)
+			if err != nil {
+				if strictErrors {
+					return false, err
+				}
+
+				rel.Logger().WithError(err).Warn("3-way merge failed, falling back to the stored manifest")
+			}
+
+			oldManifest = merged
 		}
 		// I don't use manifest.ParseRelease
 		// Because Structs are different.
@@ -122,21 +137,24 @@ func (p *Plan) DiffLive(ctx context.Context, opts *diff.Options, threeWayMerge b
 	return changed, nil
 }
 
-func get3WayMergeManifests(rel release.Config, oldManifest string) string { //nolint:gocognit
+// get3WayMergeManifests folds the live cluster state into the old manifest for a
+// 3-way merge diff. It returns the merged manifest and a non-nil error only on a
+// genuine failure (cluster unreachable, RBAC forbidden, network, ...). A resource
+// that is legitimately absent from the cluster is not an error: it is simply
+// skipped. On error it returns the untouched oldManifest so a lenient caller can
+// still fall back to it. The returned error must NOT be dropped when the caller
+// wants a trustworthy exit code.
+func get3WayMergeManifests(rel release.Config, oldManifest string) (string, error) { //nolint:gocognit
 	cfg := rel.Cfg()
 
 	err := cfg.KubeClient.IsReachable()
 	if err != nil {
-		rel.Logger().WithError(err).Warn("failed to connect to k8s to run 3-way merge, skipping")
-
-		return oldManifest
+		return oldManifest, fmt.Errorf("failed to connect to k8s to run 3-way merge: %w", err)
 	}
 
 	oldResources, err := cfg.KubeClient.Build(strings.NewReader(oldManifest), false)
 	if err != nil {
-		rel.Logger().WithError(err).Warn("failed to build old resources list for 3-way merge, skipping")
-
-		return oldManifest
+		return oldManifest, fmt.Errorf("failed to build old resources list for 3-way merge: %w", err)
 	}
 
 	updatedManifest := ""
@@ -191,12 +209,10 @@ func get3WayMergeManifests(rel release.Config, oldManifest string) string { //no
 		return nil
 	})
 	if err != nil {
-		rel.Logger().WithError(err).Warn("failed to get latest objects for 3-way merge, skipping")
-
-		return oldManifest
+		return oldManifest, fmt.Errorf("failed to get latest objects for 3-way merge: %w", err)
 	}
 
-	return updatedManifest
+	return updatedManifest, nil
 }
 
 //nolint:gocritic // cannot change argument types as it is required by diff library

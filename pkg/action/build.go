@@ -219,7 +219,9 @@ func (i *Build) diffing(ctx context.Context, p *plan.Plan) error {
 		}
 	case DiffModeLive:
 		log.Info("diffing manifests in the kubernetes cluster")
-		if _, err := p.DiffLive(ctx, i.diff.Options, i.diff.ThreeWayMerge); err != nil {
+		// build's diff is a side effect, not an exit-code gate, so keep the lenient
+		// 3-way-merge fallback (strictErrors=false) to preserve existing behavior.
+		if _, err := p.DiffLive(ctx, i.diff.Options, i.diff.ThreeWayMerge, false); err != nil {
 			return err
 		}
 	case DiffModeNone:

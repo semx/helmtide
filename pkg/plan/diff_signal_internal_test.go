@@ -3,11 +3,15 @@ package plan
 import (
 	"context"
 	"errors"
+	"io"
 	"testing"
 
 	"github.com/databus23/helm-diff/v3/diff"
 	"github.com/semx/helmtide/pkg/release"
 	"github.com/stretchr/testify/suite"
+	"helm.sh/helm/v4/pkg/action"
+	chart "helm.sh/helm/v4/pkg/chart/v2"
+	kubeFake "helm.sh/helm/v4/pkg/kube/fake"
 	helmRelease "helm.sh/helm/v4/pkg/release/v1"
 )
 
@@ -163,7 +167,7 @@ func (ts *DiffSignalTestSuite) TestDiffLiveRealErrorReturnsError() {
 	p := New(ts.T().TempDir())
 	p.body = &planBody{Releases: release.Configs{rel}}
 
-	changed, err := p.DiffLive(ts.ctx, diffOpts(), false)
+	changed, err := p.DiffLive(ts.ctx, diffOpts(), false, false)
 	ts.Require().Error(err)
 	ts.Require().False(changed)
 }
@@ -177,7 +181,67 @@ func (ts *DiffSignalTestSuite) TestDiffLiveNotDeployedIsChange() {
 	p := New(ts.T().TempDir())
 	p.body = &planBody{Releases: release.Configs{rel}}
 
-	changed, err := p.DiffLive(ts.ctx, diffOpts(), false)
+	changed, err := p.DiffLive(ts.ctx, diffOpts(), false, false)
 	ts.Require().NoError(err)
 	ts.Require().True(changed)
+}
+
+// failingKube returns a fake KubeClient whose reachability check fails, standing
+// in for an unreachable cluster / RBAC-forbidden live lookup.
+func failingKube(reason string) *kubeFake.FailingKubeClient {
+	return &kubeFake.FailingKubeClient{
+		PrintingKubeClient: kubeFake.PrintingKubeClient{Out: io.Discard, LogOutput: io.Discard},
+		ConnectionError:    errors.New(reason),
+	}
+}
+
+// TestGet3WayMergeUnreachableReturnsError: a genuine cluster failure during the
+// 3-way merge is now reported as an error (not swallowed), and the untouched
+// input manifest is returned so a lenient caller can still fall back.
+func (ts *DiffSignalTestSuite) TestGet3WayMergeUnreachableReturnsError() {
+	rel := ts.newRelease()
+	rel.On("Cfg").Return(&action.Configuration{KubeClient: failingKube("dial tcp: connection refused")})
+
+	merged, err := get3WayMergeManifests(rel, "some-manifest")
+	ts.Require().Error(err)
+	ts.Require().Equal("some-manifest", merged)
+}
+
+// TestDiffLiveThreeWayMergeStrictReturnsError: on the --detailed-exitcode path a
+// real RBAC/network failure in the 3-way merge must surface as an error (exit 1),
+// never be counted as a change (exit 2). This is the swallow-path codex flagged.
+func (ts *DiffSignalTestSuite) TestDiffLiveThreeWayMergeStrictReturnsError() {
+	active := &helmRelease.Release{Manifest: configMapManifest("value1")}
+
+	rel := ts.newRelease()
+	rel.On("Get", 0).Return(active, nil)
+	rel.On("Cfg").Return(&action.Configuration{KubeClient: failingKube("forbidden: cannot get deployments")})
+
+	p := New(ts.T().TempDir())
+	p.body = &planBody{Releases: release.Configs{rel}}
+
+	changed, err := p.DiffLive(ts.ctx, diffOpts(), true /* threeWayMerge */, true /* strictErrors */)
+	ts.Require().Error(err)
+	ts.Require().False(changed)
+}
+
+// TestDiffLiveThreeWayMergeLenientSwallowsError: without --detailed-exitcode the
+// historical lenient warn+fallback is preserved, so the same 3-way failure does
+// not turn into an error (behavior unchanged for existing users).
+func (ts *DiffSignalTestSuite) TestDiffLiveThreeWayMergeLenientSwallowsError() {
+	ch := &chart.Chart{Metadata: &chart.Metadata{Name: "redis"}}
+	active := &helmRelease.Release{Manifest: "", Chart: ch}
+
+	rel := ts.newRelease()
+	rel.On("Get", 0).Return(active, nil)
+	rel.On("Cfg").Return(&action.Configuration{KubeClient: failingKube("forbidden")})
+	rel.On("DryRun").Return()
+	rel.On("Sync").Return(&helmRelease.Release{Chart: ch}, nil)
+
+	p := New(ts.T().TempDir())
+	p.body = &planBody{Releases: release.Configs{rel}}
+
+	changed, err := p.DiffLive(ts.ctx, diffOpts(), true /* threeWayMerge */, false /* strictErrors */)
+	ts.Require().NoError(err)
+	ts.Require().False(changed)
 }
