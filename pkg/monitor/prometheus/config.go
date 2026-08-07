@@ -43,7 +43,7 @@ func NewConfig() *Config {
 }
 
 // newRoundTripper builds an HTTP RoundTripper for the Prometheus client,
-// mirroring api.DefaultRoundTripper but honouring the insecure flag so that
+// mirroring api.DefaultRoundTripper but honoring the insecure flag so that
 // TLS certificate verification can be skipped when requested.
 func newRoundTripper(insecure bool) *http.Transport {
 	return &http.Transport{
