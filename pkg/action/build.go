@@ -124,7 +124,7 @@ func (i *Build) flags() []cli.Flag {
 
 		&cli.BoolFlag{
 			Name:        "yml",
-			Usage:       "auto helmwave.yml.tpl --> helmwave.yml",
+			Usage:       "auto helmtide.yml.tpl --> helmtide.yml",
 			Value:       false,
 			Category:    "YML",
 			EnvVars:     EnvVars("AUTO_YML", "AUTO_YAML"),

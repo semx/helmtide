@@ -25,7 +25,7 @@ func (i *Down) Run(ctx context.Context) error {
 	}
 
 	if i.build.skipUnchanged {
-		log.Warn("I can't use HELMWAVE_SKIP_UNCHANGED=true for down command. I've changed it to false")
+		log.Warn("I can't use HELMTIDE_SKIP_UNCHANGED=true for down command. I've changed it to false")
 		i.build.skipUnchanged = false
 	}
 

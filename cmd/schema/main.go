@@ -11,7 +11,7 @@ import (
 
 func main() {
 	c := cli.NewApp()
-	c.Usage = "just generates json schema for helmwave support"
+	c.Usage = "just generates json schema for helmtide support"
 	c.Commands = commands
 	c.Version = helmwave.Version
 

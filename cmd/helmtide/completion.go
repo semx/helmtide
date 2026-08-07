@@ -10,7 +10,7 @@ import (
 const (
 	bash = `#!/bin/bash
 
-: ${PROG:=helmwave}
+: ${PROG:=helmtide}
 
 _helm() {
   if [[ "${COMP_WORDS[0]}" != "source" ]]; then
@@ -31,9 +31,9 @@ complete -o bashdefault -o default -o nospace -F _helm $PROG
 unset PROG
 `
 
-	zsh = `#compdef helmwave
+	zsh = `#compdef helmtide
 
-_helmwave() {
+_helmtide() {
 
   local -a opts
   local cur
@@ -54,14 +54,14 @@ _helmwave() {
 }
 
 # don't run the completion function when being source-ed or eval-ed
-if [ "$funcstack[1]" = "_helmwave" ]; then
-    _helmwave
+if [ "$funcstack[1]" = "_helmtide" ]; then
+    _helmtide
 fi
 
-compdef _helmwave helmwave
+compdef _helmtide helmtide
 `
 
-	fish = `function __fish_helmwave_generate_completions
+	fish = `function __fish_helmtide_generate_completions
     set -l args (commandline -opc)
     set -l current_token (commandline -ct)
     if test (string match -r "^-" -- $current_token)
@@ -71,14 +71,14 @@ compdef _helmwave helmwave
     end
 end
 
-function __fish_helmwave_complete
-    set -l completions (__fish_helmwave_generate_completions)
+function __fish_helmtide_complete
+    set -l completions (__fish_helmtide_generate_completions)
     for opt in $completions
         echo "$opt"
     end
 end
 
-complete -c helmwave -f -a '(__fish_helmwave_complete)'
+complete -c helmtide -f -a '(__fish_helmtide_complete)'
 `
 )
 
@@ -88,9 +88,9 @@ func completion() *cli.Command {
 		Category: action.Step_,
 		Usage:    "generate completion script",
 		Description: `
-			echo "source <(helmwave completion bash)" >> ~/.bashrc
-			echo "source <(helmwave completion zsh)" >> ~/.zshrc
-			helmwave completion fish > ~/.config/fish/functions/helmwave.fish
+			echo "source <(helmtide completion bash)" >> ~/.bashrc
+			echo "source <(helmtide completion zsh)" >> ~/.zshrc
+			helmtide completion fish > ~/.config/fish/functions/helmtide.fish
 		`,
 		Subcommands: []*cli.Command{
 			{
