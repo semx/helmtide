@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/databus23/helm-diff/v3/diff"
@@ -60,10 +61,8 @@ func TestDiffDetailedExitcodeFlagRegistered(t *testing.T) {
 
 	hasFlag := func(flags []cli.Flag) bool {
 		for _, f := range flags {
-			for _, n := range f.Names() {
-				if n == "detailed-exitcode" {
-					return true
-				}
+			if slices.Contains(f.Names(), "detailed-exitcode") {
+				return true
 			}
 		}
 

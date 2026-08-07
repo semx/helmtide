@@ -86,47 +86,13 @@ func (p *Plan) DiffLive(ctx context.Context, opts *diff.Options, threeWayMerge, 
 	changed := false
 
 	for _, rel := range p.body.Releases {
-		active, ok := alive[rel.Uniq()]
-		if !ok {
-			// The release does not exist on the cluster yet, so applying the plan
-			// would install it. That is a change for detailed-exitcode purposes.
-			changed = true
-			rel.Logger().Info("release is not deployed yet, it would be installed")
-
-			continue
-		}
-
-		newManifest := p.manifests[rel.Uniq()]
-		oldManifest := active.Manifest
-		if threeWayMerge {
-			merged, err := get3WayMergeManifests(rel, active.Manifest)
-			if err != nil {
-				if strictErrors {
-					return false, err
-				}
-
-				rel.Logger().WithError(err).Warn("3-way merge failed, falling back to the stored manifest")
-			}
-
-			oldManifest = merged
-		}
-		// I don't use manifest.ParseRelease
-		// Because Structs are different.
-		oldSpecs := parseManifests(oldManifest, rel.Namespace())
-		newSpecs := parseManifests(newManifest, rel.Namespace())
-
-		manifestChange := diff.Manifests(oldSpecs, newSpecs, opts, rel.Logger().Logger.Out)
-
-		chartChange, err := diffCharts(ctx, active.Chart, rel, rel.Logger())
+		relChanged, err := p.diffLiveRelease(ctx, rel, alive, opts, threeWayMerge, strictErrors)
 		if err != nil {
 			return false, err
 		}
 
-		if manifestChange || chartChange {
+		if relChanged {
 			changed = true
-		} else {
-			rel.Logger().Info("no changes")
-			p.unchanged = append(p.unchanged, rel)
 		}
 	}
 
@@ -135,6 +101,61 @@ func (p *Plan) DiffLive(ctx context.Context, opts *diff.Options, threeWayMerge, 
 	}
 
 	return changed, nil
+}
+
+// diffLiveRelease reports whether a single release differs from its live cluster
+// state. A genuine cluster/RBAC/3-way error is returned (so the caller can exit
+// non-zero); a release absent from the cluster counts as a change (it would be
+// installed).
+func (p *Plan) diffLiveRelease(
+	ctx context.Context,
+	rel release.Config,
+	alive map[uniqname.UniqName]*live.Release,
+	opts *diff.Options,
+	threeWayMerge, strictErrors bool,
+) (bool, error) {
+	active, ok := alive[rel.Uniq()]
+	if !ok {
+		// Not on the cluster yet, so applying the plan would install it.
+		rel.Logger().Info("release is not deployed yet, it would be installed")
+
+		return true, nil
+	}
+
+	oldManifest := active.Manifest
+	if threeWayMerge {
+		merged, err := get3WayMergeManifests(rel, active.Manifest)
+		if err != nil {
+			if strictErrors {
+				return false, err
+			}
+
+			rel.Logger().WithError(err).Warn("3-way merge failed, falling back to the stored manifest")
+		}
+
+		oldManifest = merged
+	}
+
+	// I don't use manifest.ParseRelease
+	// Because Structs are different.
+	oldSpecs := parseManifests(oldManifest, rel.Namespace())
+	newSpecs := parseManifests(p.manifests[rel.Uniq()], rel.Namespace())
+
+	manifestChange := diff.Manifests(oldSpecs, newSpecs, opts, rel.Logger().Logger.Out)
+
+	chartChange, err := diffCharts(ctx, active.Chart, rel, rel.Logger())
+	if err != nil {
+		return false, err
+	}
+
+	if manifestChange || chartChange {
+		return true, nil
+	}
+
+	rel.Logger().Info("no changes")
+	p.unchanged = append(p.unchanged, rel)
+
+	return false, nil
 }
 
 // get3WayMergeManifests folds the live cluster state into the old manifest for a

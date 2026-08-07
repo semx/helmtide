@@ -27,8 +27,8 @@ const (
 type Diff struct {
 	*diff.Options
 	kindSuppressHelper cli.StringSlice
-	ThreeWayMerge      bool // maybe it should move to DiffLive?
 	findRenamesHelper  float64
+	ThreeWayMerge      bool // maybe it should move to DiffLive?
 
 	// DetailedExitcode makes the diff subcommands exit with DiffDetailedExitcode
 	// when differences are found (and 0 when there are none), like
