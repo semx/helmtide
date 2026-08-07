@@ -38,7 +38,7 @@ type Diff struct {
 
 // detailedExitcodeErr returns a cli.ExitCoder with DiffDetailedExitcode when the
 // --detailed-exitcode flag is enabled and the diff found changes. It returns nil
-// otherwise, keeping the default behaviour (exit 0) intact. Real diff failures are
+// otherwise, keeping the default behavior (exit 0) intact. Real diff failures are
 // handled separately by returning their own error, so they still exit with 1.
 func detailedExitcodeErr(enabled, changed bool) error {
 	if enabled && changed {

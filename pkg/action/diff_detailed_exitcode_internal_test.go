@@ -13,7 +13,7 @@ import (
 // "changes found" signal into a process exit code.
 //
 // Truth table:
-//   - flag off, changes found      -> exit 0 (nil)      : default behaviour unchanged
+//   - flag off, changes found      -> exit 0 (nil)      : default behavior unchanged
 //   - flag on,  changes found      -> exit 2 (ExitCoder): differences detected
 //   - flag on,  no changes         -> exit 0 (nil)
 //   - flag off, no changes         -> exit 0 (nil)
