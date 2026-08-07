@@ -63,14 +63,14 @@ func (d *DiffLocal) flags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
 			Name:        "plandir1",
-			Value:       ".helmwave/",
+			Value:       plan.Dir,
 			Usage:       "path to plandir1",
 			EnvVars:     EnvVars("PLANDIR_1", "PLANDIR"),
 			Destination: &d.plandir1,
 		},
 		&cli.StringFlag{
 			Name:        "plandir2",
-			Value:       ".helmwave/",
+			Value:       plan.Dir,
 			Usage:       "path to plandir2",
 			EnvVars:     EnvVars("PLANDIR_2"),
 			Destination: &d.plandir2,

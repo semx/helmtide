@@ -25,10 +25,12 @@ func (c *Config) Flags() []cli.Flag {
 
 	return []cli.Flag{
 		&cli.PathFlag{
-			Name:        "cache-dir",
-			Usage:       "base directory for cache",
-			Value:       defaultCache,
-			EnvVars:     []string{"HELMWAVE_CACHE_DIR", "HELMWAVE_CACHE_HOME"},
+			Name:  "cache-dir",
+			Usage: "base directory for cache",
+			Value: defaultCache,
+			// HELMTIDE_ names take precedence; the legacy HELMWAVE_ names are
+			// still read so an existing setup keeps working.
+			EnvVars:     []string{"HELMTIDE_CACHE_DIR", "HELMTIDE_CACHE_HOME", "HELMWAVE_CACHE_DIR", "HELMWAVE_CACHE_HOME"},
 			Destination: &c.Home,
 		},
 	}

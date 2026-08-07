@@ -29,7 +29,7 @@ func (l *Settings) Flags() []cli.Flag {
 			Usage:       "You can set: [ text | json | pad | emoji ]",
 			Value:       "emoji",
 			Category:    "LOGGER",
-			EnvVars:     []string{"HELMWAVE_LOG_FORMAT"},
+			EnvVars:     []string{"HELMTIDE_LOG_FORMAT", "HELMWAVE_LOG_FORMAT"},
 			Destination: &l.format,
 		},
 		&cli.StringFlag{
@@ -37,7 +37,7 @@ func (l *Settings) Flags() []cli.Flag {
 			Usage:       "You can set: [ debug | info | warn  | fatal | panic | trace ]",
 			Value:       "info",
 			Category:    "LOGGER",
-			EnvVars:     []string{"HELMWAVE_LOG_LEVEL", "HELMWAVE_LOG_LVL"},
+			EnvVars:     []string{"HELMTIDE_LOG_LEVEL", "HELMTIDE_LOG_LVL", "HELMWAVE_LOG_LEVEL", "HELMWAVE_LOG_LVL"},
 			Destination: &l.level,
 		},
 		&cli.BoolFlag{
@@ -45,7 +45,7 @@ func (l *Settings) Flags() []cli.Flag {
 			Usage:       "on/off color",
 			Value:       true,
 			Category:    "LOGGER",
-			EnvVars:     []string{"HELMWAVE_LOG_COLOR"},
+			EnvVars:     []string{"HELMTIDE_LOG_COLOR", "HELMWAVE_LOG_COLOR"},
 			Destination: &l.color,
 		},
 		&cli.BoolFlag{
@@ -53,7 +53,7 @@ func (l *Settings) Flags() []cli.Flag {
 			Usage:       "Add timestamps to log messages",
 			Value:       false,
 			Category:    "LOGGER",
-			EnvVars:     []string{"HELMWAVE_LOG_TIMESTAMPS"},
+			EnvVars:     []string{"HELMTIDE_LOG_TIMESTAMPS", "HELMWAVE_LOG_TIMESTAMPS"},
 			Destination: &l.timestamps,
 		},
 	}

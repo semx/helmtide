@@ -50,9 +50,9 @@ func CreateApp() *cli.App {
 	c.Usage = "true release management for helm"
 	c.Version = helmwave.Version
 	c.Description = "This tool helps you compose your helm releases!\n" +
-		"0. $ helmwave yml\n" +
-		"1. $ helmwave build\n" +
-		"2. $ helmwave up\n"
+		"0. $ helmtide yml\n" +
+		"1. $ helmtide build\n" +
+		"2. $ helmtide up\n"
 
 	c.Before = before
 	c.Flags = action.GlobalFlags()

@@ -26,7 +26,7 @@ type config struct {
 	log  *log.Entry
 
 	LifecycleF             hooks.Lifecycle `yaml:"lifecycle" json:"lifecycle" jsonschema:"description=Lifecycle hooks"`
-	Store                  map[string]any  `yaml:"store,omitempty" json:"store,omitempty" jsonschema:"title=The Store,description=It allows to pass your custom fields from helmwave.yml to values"`
+	Store                  map[string]any  `yaml:"store,omitempty" json:"store,omitempty" jsonschema:"title=The Store,description=It allows to pass your custom fields from helmtide.yml to values"`
 	ChartF                 Chart           `yaml:"chart" json:"chart" jsonschema:"title=Chart reference,description=Describes chart that release uses,oneof_type=string;object"`
 	Tests                  configTests     `yaml:"tests" json:"tests" jsonschema:"description=Configuration for helm tests"`
 	PendingReleaseStrategy PendingStrategy `yaml:"pending_release_strategy,omitempty" json:"pending_release_strategy,omitempty" jsonschema:"description=Strategy to handle releases in pending statuses (pending-install/pending-upgrade/pending-rollback)"`
