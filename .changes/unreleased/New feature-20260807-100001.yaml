@@ -1,0 +1,6 @@
+kind: New feature
+body: add a --detailed-exitcode flag to the diff command that exits with code 2 when differences are found
+time: 2026-08-07T10:00:01.000000000+04:00
+custom:
+    Author: semx
+    Issue: ""

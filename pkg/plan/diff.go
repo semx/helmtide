@@ -29,7 +29,8 @@ var SkippedAnnotations = map[string][]string{
 }
 
 // DiffPlan show diff between 2 plans.
-func (p *Plan) DiffPlan(b *Plan, opts *diff.Options) {
+// It returns true when at least one difference was found between the plans.
+func (p *Plan) DiffPlan(b *Plan, opts *diff.Options) bool {
 	visited := make(map[uniqname.UniqName]bool)
 	k := 0
 
@@ -52,11 +53,12 @@ func (p *Plan) DiffPlan(b *Plan, opts *diff.Options) {
 		}
 	}
 
-	showChangesReport(p.body.Releases, visited, k)
+	return showChangesReport(p.body.Releases, visited, k)
 }
 
 // DiffLive show diff with production releases in k8s-cluster.
-func (p *Plan) DiffLive(ctx context.Context, opts *diff.Options, threeWayMerge bool) {
+// It returns true when at least one difference was found against the cluster.
+func (p *Plan) DiffLive(ctx context.Context, opts *diff.Options, threeWayMerge bool) bool {
 	alive, _, err := p.GetLive(ctx)
 	if err != nil {
 		log.Fatalf("Something went wrong with getting releases in the kubernetes cluster: %v", err)
@@ -90,7 +92,7 @@ func (p *Plan) DiffLive(ctx context.Context, opts *diff.Options, threeWayMerge b
 		}
 	}
 
-	showChangesReport(p.body.Releases, visited, k)
+	return showChangesReport(p.body.Releases, visited, k)
 }
 
 func get3WayMergeManifests(rel release.Config, oldManifest string) string { //nolint:gocognit
@@ -241,7 +243,10 @@ func parseManifests(m, ns string) map[string]*manifest.MappingResult {
 }
 
 // showChangesReport help function for reporting helm-diff.
-func showChangesReport(releases []release.Config, visited map[uniqname.UniqName]bool, k int) {
+// It returns true when any change was detected: either a release that differs
+// (k counts unchanged releases, so k < len means at least one changed) or a
+// release that existed in the previous plan but is no longer affected.
+func showChangesReport(releases []release.Config, visited map[uniqname.UniqName]bool, k int) bool {
 	previous := false
 	for _, rel := range releases {
 		if visited[rel.Uniq()] {
@@ -254,7 +259,11 @@ func showChangesReport(releases []release.Config, visited map[uniqname.UniqName]
 
 	if k == len(releases) && !previous {
 		log.Info("plan has no changes")
+
+		return false
 	}
+
+	return true
 }
 
 // GetLive returns maps of releases in a k8s-cluster.

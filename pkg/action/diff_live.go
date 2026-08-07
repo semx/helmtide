@@ -27,9 +27,9 @@ func (d *DiffLive) Run(ctx context.Context) error {
 		return os.ErrNotExist
 	}
 
-	p.DiffLive(ctx, d.diff.Options, d.diff.ThreeWayMerge)
+	changed := p.DiffLive(ctx, d.diff.Options, d.diff.ThreeWayMerge)
 
-	return nil
+	return detailedExitcodeErr(d.diff.DetailedExitcode, changed)
 }
 
 // Cmd returns 'diff live' *cli.Command.
@@ -47,5 +47,6 @@ func (d *DiffLive) flags() []cli.Flag {
 	return []cli.Flag{
 		flagPlandir(&d.plandir),
 		flagDiffThreeWayMerge(&d.diff.ThreeWayMerge),
+		flagDiffDetailedExitcode(&d.diff.DetailedExitcode),
 	}
 }

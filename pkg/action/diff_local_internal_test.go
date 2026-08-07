@@ -41,7 +41,7 @@ func (ts *DiffLocalTestSuite) SetupTest() {
 }
 
 func (ts *DiffLocalTestSuite) TestCmd() {
-	s := &DiffLocal{}
+	s := &DiffLocal{diff: &Diff{Options: &diff.Options{}}}
 	cmd := s.Cmd()
 
 	ts.Require().NotNil(cmd)
