@@ -9,7 +9,9 @@ name: Integration tests
 # opt-in is explicit here and nowhere else.
 #
 # Locally: HELMTIDE_TEST_CLUSTER=~/.kube/config go test -tags=integration ./...
-# The OCI test additionally needs a plain-HTTP registry; set HELMTIDE_TEST_OCI_PLAIN.
+# The OCI tests additionally need registries: HELMTIDE_TEST_OCI_PLAIN=host:port for
+# the plain-HTTP one, and HELMTIDE_TEST_OCI_AUTH=host:port with
+# HELMTIDE_TEST_OCI_AUTH_USER / HELMTIDE_TEST_OCI_AUTH_PASS for the authenticated one.
 on:
   push:
     branches: [ main ]
@@ -70,7 +72,34 @@ jobs:
             echo "KUBECONFIG=$HOME/.kube/config"
             echo "HELMTIDE_TEST_CLUSTER=$HOME/.kube/config"
             echo "HELMTIDE_TEST_OCI_PLAIN=localhost:5000"
+            echo "HELMTIDE_TEST_OCI_AUTH=localhost:5002"
+            echo "HELMTIDE_TEST_OCI_AUTH_USER=tide"
+            echo "HELMTIDE_TEST_OCI_AUTH_PASS=tidepass"
           } >> "$GITHUB_ENV"
+
+      - name: Start an authenticated OCI registry
+        # A second registry, HTTPS with a self-signed certificate and htpasswd
+        # auth, so the authenticated-OCI test exercises helmtide's own registry
+        # login (pkg/registry Install()), which the plain-HTTP one does not.
+        # Reachable only on localhost, where the push and the pull happen.
+        run: |
+          mkdir -p auth-reg/certs auth-reg/auth
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+            -keyout auth-reg/certs/tls.key -out auth-reg/certs/tls.crt \
+            -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+          docker run --rm httpd:2 htpasswd -Bbn tide tidepass > auth-reg/auth/htpasswd
+          docker run -d --name helmtide-authreg -p 5002:5000 \
+            -v "$PWD/auth-reg/certs:/certs" -v "$PWD/auth-reg/auth:/auth" \
+            -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/tls.crt \
+            -e REGISTRY_HTTP_TLS_KEY=/certs/tls.key \
+            -e REGISTRY_AUTH=htpasswd \
+            -e REGISTRY_AUTH_HTPASSWD_REALM=Registry \
+            -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd \
+            registry:2
+          for _ in $(seq 1 20); do
+            [ "$(curl -sk -o /dev/null -w '%{http_code}' https://localhost:5002/v2/)" = "401" ] && break
+            sleep 1
+          done
 
       - name: Check the cluster answers
         run: kubectl cluster-info

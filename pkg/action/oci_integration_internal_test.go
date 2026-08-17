@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v4/pkg/chart/v2/loader"
 	chartutil "helm.sh/helm/v4/pkg/chart/v2/util"
+	"helm.sh/helm/v4/pkg/registry"
 )
 
 // ociPlainEnv names a plain-HTTP OCI registry (host:port, no scheme) the test
@@ -77,13 +78,81 @@ releases:
 		"chart from the plain-HTTP OCI registry must have been installed")
 }
 
-// TestOCIAuthenticatedIntegration is a placeholder for the authenticated-OCI
-// path. Standing up a registry with htpasswd auth and threading credentials is
-// impractical in this harness, so it is skipped with a reason rather than
-// silently omitted. The plain-HTTP test already covers the registry-client
-// wiring the fix touched; auth would additionally cover login/credential flow.
+// ociAuthEnv names an auth-enabled OCI registry (host:port, no scheme), and
+// ociAuthUserEnv / ociAuthPassEnv its credentials. The registry is expected to
+// serve HTTPS with a self-signed certificate (insecure: true covers it), which
+// is what an htpasswd-protected registry:2 does. Left unset, the test skips.
+const (
+	ociAuthEnv     = "HELMTIDE_TEST_OCI_AUTH"
+	ociAuthUserEnv = "HELMTIDE_TEST_OCI_AUTH_USER"
+	ociAuthPassEnv = "HELMTIDE_TEST_OCI_AUTH_PASS"
+)
+
+// TestOCIAuthenticatedIntegration covers the authenticated-OCI path the
+// plain-HTTP test does not: the login/credential flow. It logs in to a private
+// registry, pushes the cm chart, then runs `up` against an oci:// reference
+// whose registry entry carries username/password so helmtide performs its own
+// helm-registry login (pkg/registry Install()) before pulling the chart.
 func TestOCIAuthenticatedIntegration(t *testing.T) {
 	tests.RequireCluster(t)
 
-	t.Skip("needs an auth-enabled OCI registry (htpasswd + credentials); not provisioned by this harness")
+	host := os.Getenv(ociAuthEnv)
+	user := os.Getenv(ociAuthUserEnv)
+	pass := os.Getenv(ociAuthPassEnv)
+	if host == "" || user == "" || pass == "" {
+		t.Skipf("needs an auth-enabled OCI registry: set %s (host:port), %s and %s",
+			ociAuthEnv, ociAuthUserEnv, ociAuthPassEnv)
+	}
+
+	ctx := tests.GetContext(t)
+	ns := namespace(t)
+
+	// Package and push the chart through an authenticated, insecure-TLS client.
+	ch, err := loader.LoadDir(chartPath(t, "cm"))
+	require.NoError(t, err, "load cm chart")
+
+	tgz, err := chartutil.Save(ch, t.TempDir())
+	require.NoError(t, err, "package cm chart")
+
+	data, err := os.ReadFile(tgz)
+	require.NoError(t, err)
+
+	rc, err := helper.NewRegistryClient(false, true) // self-signed TLS
+	require.NoError(t, err, "insecure-TLS registry client")
+
+	require.NoError(t, rc.Login(host,
+		registry.LoginOptBasicAuth(user, pass),
+		registry.LoginOptInsecure(true),
+	), "login to authenticated registry")
+
+	ref := fmt.Sprintf("%s/helmtide/cm:0.1.0", host)
+	_, err = rc.Push(data, ref)
+	require.NoError(t, err, "push chart to authenticated registry")
+
+	// Install it through helmtide. The registry entry carries the credentials,
+	// so helmtide logs in itself before pulling (the path under test).
+	plan := fmt.Sprintf(`project: oci-auth
+registries:
+  - host: %[2]s
+    username: %[3]s
+    password: %[4]s
+    insecure: true
+releases:
+  - name: cm
+    namespace: %[1]s
+    create_namespace: true
+    wait: true
+    chart:
+      name: oci://%[2]s/helmtide/cm
+      version: 0.1.0
+      insecure: true
+`, ns, host, user, pass)
+
+	b := planBuild(t, plan)
+	t.Cleanup(func() { down(ctx, t, b) })
+
+	up(ctx, t, b)
+
+	require.True(t, tests.ConfigMapExists(ctx, t, ns, "cm"),
+		"chart from the authenticated OCI registry must have been installed")
 }

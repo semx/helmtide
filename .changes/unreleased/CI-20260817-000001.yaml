@@ -1,0 +1,10 @@
+---
+kind: CI
+body: >-
+  test: implement the authenticated-OCI integration test (previously a
+  placeholder skip) and provision an htpasswd + self-signed-TLS registry in
+  hosted CI, covering helmtide's own registry login and credential flow live
+time: 2026-08-17T18:45:00.000000+04:00
+custom:
+  Issue: ""
+  Author: semx
